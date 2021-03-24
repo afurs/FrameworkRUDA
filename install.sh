@@ -1,0 +1,19 @@
+#!/bin/bash
+
+PATH_TO_SRC=$1
+PATH_TO_BUILD=$PATH_TO_SRC/build2
+PATH_TO_INSTALL=$2
+PATH_TO_LOCAL_LOGBOOK=$3
+PATH_TO_GRIDRUDA=${4:-"FrameworkRUDA"}
+PATH_TO_GRID_LOGBOOK=${5:-"logbook_alice"}
+
+
+echo "Path to src: $PATH_TO_SRC"
+echo "Path to build: $PATH_TO_BUILD"
+echo "Path to install: $PATH_TO_INSTALL"
+mkdir $PATH_TO_BUILD
+cd $PATH_TO_BUILD
+cmake -S .. -B .. -DCMAKE_INSTALL_PREFIX=$PATH_TO_INSTALL -DPATH_TO_GRIDRUDA=$PATH_TO_GRIDRUDA -DPATH_TO_LOCAL_LOGBOOK=$PATH_TO_LOCAL_LOGBOOK -DPATH_TO_GRID_LOGBOOK=$PATH_TO_GRID_LOGBOOK
+cmake --build . --target install
+cd ..
+rm -rf $PATH_TO_BUILD

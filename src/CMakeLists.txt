@@ -1,0 +1,5 @@
+add_subdirectory(analysis)
+add_subdirectory(common)
+add_subdirectory(grid)
+add_subdirectory(run_manager)
+add_subdirectory(trigger)
