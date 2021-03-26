@@ -24,7 +24,10 @@ class RunConditionTable {
   void connectTree(TTree *treeInput);
   void print() const;
   static std::vector<RunConditionTable> getVecRCT(std::string filepath);
-  static unsigned int getYear(unsigned int runnum);
+  static std::map<std::string,std::set<unsigned int>> makeMapPeriod2Runs(
+      const std::map<std::string, std::string> &mapPeriod2Filepaths);
+  static int getYear(unsigned int runnum);
+  static int getFromPeriod(std::string period);
 };
 
 } //run_manager

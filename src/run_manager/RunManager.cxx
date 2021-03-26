@@ -42,12 +42,29 @@ std::vector<RunConditionTable> RunConditionTable::getVecRCT(std::string filepath
   }
   return vecResult;
 }
-unsigned int RunConditionTable::getYear(unsigned int runnum) {
+
+std::map<std::string,std::set<unsigned int>> RunConditionTable::makeMapPeriod2Runs(
+    const std::map<std::string, std::string> &mapPeriod2Filepaths) {
+  std::map<std::string,std::set<unsigned int>> mapPeriod2Run;
+  for(const auto&entry:mapPeriod2Filepaths) {
+    std::string periodName = entry.first;
+    auto vecRCT = getVecRCT(entry.second);
+    auto pairInserted = mapPeriod2Run.insert({periodName,{}});
+    for(const auto &entryRCT: vecRCT) {
+      pairInserted.first->second.insert(static_cast<unsigned int>(entryRCT.mRunNum));
+    }
+  }
+  return mapPeriod2Run;
+}
+int RunConditionTable::getYear(unsigned int runnum) {
   if(208365<=runnum&&runnum<=247170)	return 2015;
   if(247171<=runnum&&runnum<=267254)	return 2016;
   if(267258<=runnum&&runnum<=282900)	return 2017;
   if(282901<=runnum<300000)	return 2018;
   return 0;
+}
+int RunConditionTable::getFromPeriod(std::string period) {
+  return int{2000+std::stoi(period.substr(3,2))};
 }
 }
 }
