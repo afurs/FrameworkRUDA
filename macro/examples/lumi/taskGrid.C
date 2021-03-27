@@ -14,8 +14,8 @@ R__LOAD_LIBRARY(libRunManagerRUDA.so)
 #include "AnalysisUtils.h"
 #include "TTree.h"
 #include "TFile.h"
-
-void taskGrid(std::string pathInputData="") {
+#include <omp.h>
+void taskGrid(std::string pathInputData="",std::size_t nParallelJobs=1) {
   bool isLocal;
   std::string pathToLogbook;
   if(pathInputData=="") {//GRID
@@ -61,10 +61,10 @@ void taskGrid(std::string pathInputData="") {
     cout<<endl<<"\n========================\n"<<"RUN: "<<entry.first<<"\n========================\n";
     for(const auto& fp:entry.second ) cout<<fp<<endl;
   }
-
-  //std::string stTrg = "/home/deliner/work/logbook_alice/trees/TrgClasses/TrgClasses2018.root";
   std::string stTrg;
   std::string stOutput;
+  std::tuple<std::vector<std::string>,std::string,std::string,unsigned int> tupleArgs;
+  std::vector<decltype(tupleArgs)> vecArgs;
   for(const auto& entry: mapRuns2VecFileaths) {
     auto runnum = entry.first;
     auto vecFilesPaths = entry.second;
@@ -77,16 +77,28 @@ void taskGrid(std::string pathInputData="") {
 
       stOutput = Form("outputLumiRun%i.root",runnum);
       stTrg = pathToLogbook+Form("/trees/TrgClasses/TrgClasses%i.root",year);
+      vecArgs.push_back({vecFilesPaths,stOutput,stTrg,runnum});
     }
     else { //GRID
       stTrg = Form("TrgClasses%i.root",year);
       //
       stOutput = "output.root";
+      taskAnalysisFull({vecFilesPaths,stOutput,stTrg,runnum});
     }
-
-    taskAnalysisFull(vecFilesPaths,stOutput,stTrg,runnum);
   }
 
+  if(isLocal) {//LOCAL
+    if(nParallelJobs>1) {
+      ROOT::TProcessExecutor pool(nParallelJobs);
+      auto result = pool.Map([](std::tuple<std::vector<std::string>,std::string,std::string,unsigned int> entry) {
+          taskAnalysisFull(entry);
+          return 0;}
+          , vecArgs);
+    }
+    else {
+      taskAnalysisFull(vecArgs[iTask]);
+    }
+  }
   ofstream out;
   out.open("outputs_valid", ios::out);
   out.close();

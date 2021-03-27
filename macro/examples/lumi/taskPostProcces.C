@@ -17,8 +17,8 @@ R__LOAD_LIBRARY(libRunManagerRUDA.so)
 void taskPostProcces(){
 
   //std::string pathInputData = "/home/deliner/work/data/ageing/2018/LHC18p";
-  std::string pathInputData = "input_lumi";
-  std::string pathOutput = "output/resultLumiRun%i.root";
+  std::string pathInputData = "output";
+  std::string pathOutput = "resultLumiRun%i.root";
   auto mapRunsToFilepaths = utilities::AnalysisUtils::makeMapRunsToFilepathsROOT(pathInputData);
   //INTERFACE FOR TRIGGER NAMES IN HISTS
   struct Triggers {

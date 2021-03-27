@@ -20,23 +20,25 @@ struct TrgRatioStruct:TrgRatioRawStruct{
 
   }
 };
-using EventCutID_t = EventCutID<30>;
+using EventCutID_t = EventCutID<40>;
 using DataOutput_t = TH1F;
 using Entry_t = TrgRatioStruct;
 
 using Analysis_t = AnalysisManagerBase<Entry_t,EventCutID_t,DataOutput_t>;
 using Data_t = Analysis_t::Data_t;
 using DataOutputObject_t = Analysis_t::DataOutputObject_t;
-template class EventCutID<30>;
+template class EventCutID<40>;
 template class AnalysisManagerBase<Entry_t,EventCutID_t,DataOutput_t>;
-void taskAnalysisFull(std::vector<std::string>  vecPathInputData
+void taskAnalysisFull(/*  vecPathInputData
                       ,std::string  pathOutput
                       ,std::string pathTrgClassesTree
-                      ,unsigned int runNum
-                      )
+                      ,unsigned int runNum*/
+                      std::tuple<std::vector<std::string>,std::string,std::string,unsigned int> tupleArgs)
 {
-
-
+  auto vecPathInputData = std::get<0>(tupleArgs);
+  auto pathOutput = std::get<1>(tupleArgs);
+  auto pathTrgClassesTree = std::get<2>(tupleArgs);
+  auto runNum = std::get<3>(tupleArgs);
 
   gObjectTable->Print();
   //////////////////////////////////////////
@@ -55,21 +57,33 @@ void taskAnalysisFull(std::vector<std::string>  vecPathInputData
   /// PREPARING TRIGGER CLASSES ////////////
   //////////////////////////////////////////
   //Preparing triggers
-  //std::string pathTrgClassesTree = "/home/deliner/work/logbook_alice/trees/TrgClasses/TrgClasses"+stYear+".root";
-  TFile fileTrgClassesTree(pathTrgClassesTree.c_str(),"READ");
-  TList *listTrgClassesTree = utilities::AnalysisUtils::getListObjFromFile<TTree>(fileTrgClassesTree);
-  listTrgClassesTree->SetOwner(kTRUE);
-  //AnalysisUtils::getTreesRecursively(&listTrgClassesTree,dynamic_cast<TList *>(fileTrgClassesTree.GetListOfKeys()));
-  TTree *treeTrgClasses = (TTree *)listTrgClassesTree->First();
-  analysis.mData.mTrgClassManager.init(runNum,treeTrgClasses);
-  fileTrgClassesTree.Close();
-  analysis.mData.mTrgClassManager.print();
-  delete listTrgClassesTree;
-  if(!analysis.mData.mTrgClassManager.isReady()) {
-    std::cout<<"\nWARNING! TRIGGER CLASSES ARE NOT READY! ABORTING!\n";
-    return;
+  analysis.mData.mTrgClassManager.mRunNum = runNum;
+  analysis.mData.mTrgClassManager.mFilepath = pathTrgClassesTree;
+  analysis.mData.mTrgClassManager.init();
+  //analysis.mData.mTrgClassManager.print();
+  std::map<std::string,std::string> mapName2TrgInputs = {
+    {"0EMC-B-NOPF-CENT",".*EMC.*-B-NOPF-CENT"}
+    ,{"0EMC-B-NOPF-CENTNOTRD",".*EMC.*-B-NOPF-CENTNOTRD"}
+    ,{"0EMC-B-NOPF-ALLNOTRD",".*EMC.*-B-NOPF-ALLNOTRD"}
+    ,{"0EMC-B-NOPF-FAST",".*EMC.*-B-NOPF-FAST"}
+    ,{"0EMC-B-NOPF-MUFAST",".*EMC.*-B-NOPF-MUFAST"}
+
+    ,{"0MSL-B-NOPF-CENT",".*MSL.*-B-NOPF-CENT"}
+    ,{"0MSL-B-NOPF-CENTNOTRD",".*MSL.*-B-NOPF-CENTNOTRD"}
+    ,{"0MSL-B-NOPF-ALLNOTRD",".*MSL.*-B-NOPF-ALLNOTRD"}
+    ,{"0MSL-B-NOPF-FAST",".*MSL.*-B-NOPF-FAST"}
+    ,{"0MSL-B-NOPF-MUFAST",".*MSL.*-B-NOPF-MUFAST"}
+
+    ,{"0MUL-B-NOPF-CENT",".*MUL.*-B-NOPF-CENT"}
+    ,{"0MUL-B-NOPF-CENTNOTRD",".*MUL.*-B-NOPF-CENTNOTRD"}
+    ,{"0MUL-B-NOPF-ALLNOTRD",".*MUL.*-B-NOPF-ALLNOTRD"}
+    ,{"0MUL-B-NOPF-FAST",".*MUL.*-B-NOPF-FAST"}
+    ,{"0MUL-B-NOPF-MUFAST",".*MUL.*-B-NOPF-MUFAST"}
+  };
+  for(const auto& entry: mapName2TrgInputs) {
+    auto nTrgs = analysis.mData.mTrgClassManager.defineTrgSumReg(entry.first,entry.first,entry.second);
   }
-  
+  analysis.mData.mTrgClassManager.print();
   //////////////////////////////////////////
   /// CUT BITS /////////////////////////////
   //////////////////////////////////////////
@@ -95,6 +109,24 @@ void taskAnalysisFull(std::vector<std::string>  vecPathInputData
   auto cutCINT7_MUFAST = [] (const Data_t &data)->bool {return data.checkTrgClass("CINT7-B-NOPF-MUFAST");};
   auto cutCINT7_ALLNOTRD = [] (const Data_t &data)->bool {return data.checkTrgClass("CINT7-B-NOPF-ALLNOTRD");};
 
+  auto cut0EMC_CENTNOTRD = [] (const Data_t &data)->bool {return data.checkTrgClass("0EMC-B-NOPF-CENTNOTRD");};
+  auto cut0EMC_CENT = [] (const Data_t &data)->bool {return data.checkTrgClass("0EMC-B-NOPF-CENT");};
+  auto cut0EMC_FAST = [] (const Data_t &data)->bool {return data.checkTrgClass("0EMC-B-NOPF-FAST");};
+  auto cut0EMC_MUFAST = [] (const Data_t &data)->bool {return data.checkTrgClass("0EMC-B-NOPF-MUFAST");};
+  auto cut0EMC_ALLNOTRD = [] (const Data_t &data)->bool {return data.checkTrgClass("0EMC-B-NOPF-ALLNOTRD");};
+
+  auto cut0MSL_CENTNOTRD = [] (const Data_t &data)->bool {return data.checkTrgClass("0MSL-B-NOPF-CENTNOTRD");};
+  auto cut0MSL_CENT = [] (const Data_t &data)->bool {return data.checkTrgClass("0MSL-B-NOPF-CENT");};
+  auto cut0MSL_FAST = [] (const Data_t &data)->bool {return data.checkTrgClass("0MSL-B-NOPF-FAST");};
+  auto cut0MSL_MUFAST = [] (const Data_t &data)->bool {return data.checkTrgClass("0MSL-B-NOPF-MUFAST");};
+  auto cut0MSL_ALLNOTRD = [] (const Data_t &data)->bool {return data.checkTrgClass("0MSL-B-NOPF-ALLNOTRD");};
+
+
+  auto cut0MUL_CENTNOTRD = [] (const Data_t &data)->bool {return data.checkTrgClass("0MUL-B-NOPF-CENTNOTRD");};
+  auto cut0MUL_CENT = [] (const Data_t &data)->bool {return data.checkTrgClass("0MUL-B-NOPF-CENT");};
+  auto cut0MUL_FAST = [] (const Data_t &data)->bool {return data.checkTrgClass("0MUL-B-NOPF-FAST");};
+  auto cut0MUL_MUFAST = [] (const Data_t &data)->bool {return data.checkTrgClass("0MUL-B-NOPF-MUFAST");};
+  auto cut0MUL_ALLNOTRD = [] (const Data_t &data)->bool {return data.checkTrgClass("0MUL-B-NOPF-ALLNOTRD");};
   analysis.mCutObjectManager.makeCutBit("noCuts","noCuts",cutNoCuts);
   analysis.mCutObjectManager.makeCutBit("noPileup","Excluded pileup from events",cutNoPileup);
   analysis.mCutObjectManager.makeCutBit("noPileupLowMult","Excluded pileup from events,IsPileupFromSPD()",cutNoPileupLowMult);
@@ -118,6 +150,24 @@ void taskAnalysisFull(std::vector<std::string>  vecPathInputData
   analysis.mCutObjectManager.makeCutBit("cutCINT7_FAST","cutCINT7_FAST",cutCINT7_FAST);
   analysis.mCutObjectManager.makeCutBit("cutCINT7_MUFAST","cutCINT7_MUFAST",cutCINT7_MUFAST);
   analysis.mCutObjectManager.makeCutBit("cutCINT7_ALLNOTRD","cutCINT7_ALLNOTRD",cutCINT7_ALLNOTRD);
+
+  analysis.mCutObjectManager.makeCutBit("cut0EMC_CENTNOTRD","cut0EMC_CENTNOTRD",cut0EMC_CENTNOTRD);
+  analysis.mCutObjectManager.makeCutBit("cut0EMC_CENT","cut0EMC_CENT",cut0EMC_CENT);
+  analysis.mCutObjectManager.makeCutBit("cut0EMC_FAST","cut0EMC_FAST",cut0EMC_FAST);
+  analysis.mCutObjectManager.makeCutBit("cut0EMC_MUFAST","cut0EMC_MUFAST",cut0EMC_MUFAST);
+  analysis.mCutObjectManager.makeCutBit("cut0EMC_ALLNOTRD","cut0EMC_ALLNOTRD",cut0EMC_ALLNOTRD);
+
+  analysis.mCutObjectManager.makeCutBit("cut0MSL_CENTNOTRD","cut0MSL_CENTNOTRD",cut0MSL_CENTNOTRD);
+  analysis.mCutObjectManager.makeCutBit("cut0MSL_CENT","cut0MSL_CENT",cut0MSL_CENT);
+  analysis.mCutObjectManager.makeCutBit("cut0MSL_FAST","cut0MSL_FAST",cut0MSL_FAST);
+  analysis.mCutObjectManager.makeCutBit("cut0MSL_MUFAST","cut0MSL_MUFAST",cut0MSL_MUFAST);
+  analysis.mCutObjectManager.makeCutBit("cut0MSL_ALLNOTRD","cut0MSL_ALLNOTRD",cut0MSL_ALLNOTRD);
+
+  analysis.mCutObjectManager.makeCutBit("cut0MUL_CENTNOTRD","cut0MUL_CENTNOTRD",cut0MUL_CENTNOTRD);
+  analysis.mCutObjectManager.makeCutBit("cut0MUL_CENT","cut0MUL_CENT",cut0MUL_CENT);
+  analysis.mCutObjectManager.makeCutBit("cut0MUL_FAST","cut0MUL_FAST",cut0MUL_FAST);
+  analysis.mCutObjectManager.makeCutBit("cut0MUL_MUFAST","cut0MUL_MUFAST",cut0MUL_MUFAST);
+  analysis.mCutObjectManager.makeCutBit("cut0MUL_ALLNOTRD","cut0MUL_ALLNOTRD",cut0MUL_ALLNOTRD);
 
   //////////////////////////////////////////
   /// ANALYSIS OUTPUT //////////////////////
@@ -145,7 +195,7 @@ void taskAnalysisFull(std::vector<std::string>  vecPathInputData
     ,analysis.mCutObjectManager.makeNamedEventCutID("V0_v2 noPileup PhysSel vertexGlobal")
     ,analysis.mCutObjectManager.makeNamedEventCutID("V0_v2 noPileupLowMult PhysSel vertexTrack")
     ,analysis.mCutObjectManager.makeNamedEventCutID("V0_v1 noPileupLowMult PhysSel vertexGlobal")
-    ,analysis.mCutObjectManager.makeNamedEventCutID("cutC0TVX_CENTNOTRD")
+/*    ,analysis.mCutObjectManager.makeNamedEventCutID("cutC0TVX_CENTNOTRD")
     ,analysis.mCutObjectManager.makeNamedEventCutID("cutC0TVX_CENT")
     ,analysis.mCutObjectManager.makeNamedEventCutID("cutC0TVX_FAST")
     ,analysis.mCutObjectManager.makeNamedEventCutID("cutC0TVX_MUFAST")
@@ -156,9 +206,16 @@ void taskAnalysisFull(std::vector<std::string>  vecPathInputData
     ,analysis.mCutObjectManager.makeNamedEventCutID("cutCINT7_FAST")
     ,analysis.mCutObjectManager.makeNamedEventCutID("cutCINT7_MUFAST")
     ,analysis.mCutObjectManager.makeNamedEventCutID("cutCINT7_ALLNOTRD")
-
+*/
   };
   //Trigger cluster names
+  std::vector<std::string> vecTrgNames = {
+    "cutC0TVX"
+    ,"cutCINT7"
+    ,"cut0EMC"
+    ,"cut0MSL"
+    ,"cut0MUL"
+  };
   std::vector<std::string> vecTrgClusterNames = {
      "CENTNOTRD"
       ,"CENT"
@@ -166,27 +223,31 @@ void taskAnalysisFull(std::vector<std::string>  vecPathInputData
       ,"MUFAST"
     ,"ALLNOTRD"
   };
-  //Prepare output for C0TVX trigger counter
-  std::vector<std::string> vecCntTrgHistNamesC0TVX;
-  for(const auto &trgClstName:vecTrgClusterNames) {
-    std::string histNameDescriptor = "hCutC0TVX_";
-    std::string histName = histNameDescriptor+trgClstName;
-    std::string cutName = "cutC0TVX_" + trgClstName + " " + "cutCINT7_" + trgClstName;
-    //std::string cutName = "cutC0TVX_" + trgClstName;
-    vecCntTrgHistNamesC0TVX.push_back(histName);
-    analysis.mDataOutputManager.makeDataOutput(histName,histName,vecEventCutID
+
+  //Making triggers
+  std::map<std::string,std::string> mapCutTrgs;
+  std::cout<<"\n======Hist to trigger cuts=====";
+  for(const auto& trgNames: vecTrgNames) {
+    for(const auto& trgCluster: vecTrgClusterNames) {
+      std::string trgCutName = trgNames+"_"+trgCluster;
+      std::string trgHistName = "hist_" + trgNames+"_"+trgCluster;
+      if(trgCutName.find("cutCINT7")==std::string::npos) {
+        trgCutName+=std::string{" cutCINT7_"+trgCluster};
+      }
+      std::cout<<"\n"<<trgHistName<<"|"<<trgCutName;
+      mapCutTrgs.insert({trgHistName,trgCutName});
+    }
+  }
+  std::cout<<"\n=================================\n";
+  for(const auto& entry:mapCutTrgs) {
+    std::string histName = entry.first;
+    std::string cutName = entry.second;
+    analysis.mDataOutputManager.makeDataOutput(histName
+                                               ,histName
+                                               ,vecEventCutID
                                                ,analysis.mCutObjectManager.makeNamedEventCutID(cutName));
   }
-  //Prepare output for CINT7 trigger counter
-  std::vector<std::string> vecCntTrgHistNamesCINT7;
-  for(const auto &trgClstName:vecTrgClusterNames) {
-    std::string histNameDescriptor = "hCutCINT7_";
-    std::string histName = histNameDescriptor+trgClstName;
-    std::string cutName = "cutCINT7_" + trgClstName;
-    vecCntTrgHistNamesCINT7.push_back(histName);
-    analysis.mDataOutputManager.makeDataOutput(histName,histName,vecEventCutID
-                                               ,analysis.mCutObjectManager.makeNamedEventCutID(cutName));
-  }
+
   analysis.mDataOutputManager.makeDataOutput("hCutVertexSPD","hCutVertexSPD",vecEventCutID
                                              ,analysis.mCutObjectManager.makeNamedEventCutID("vertexSPD"));
   analysis.mDataOutputManager.makeDataOutput("hNoCuts","hNoCuts",vecEventCutID
@@ -562,23 +623,14 @@ void taskAnalysisFull(std::vector<std::string>  vecPathInputData
                        ,entry.mHistParam.mNBinsX,entry.mHistParam.mLowBinX,entry.mHistParam.mUpBinX}
           ,entry.mFuncFill
           ,analysis.mCutObjectManager.makeNamedEventCutID(entry.mCutName));
-    /*
-    if(histName.find("hBC_")!=std::string::npos) {
-      analysis.mDataOutputManager.makeDataOutput(
-            DataOutput_t{entry.mHistName.c_str(),entry.mHistTitle.c_str(),3600,0,3600}
-            ,entry.mFuncFill
-            ,analysis.mCutObjectManager.makeNamedEventCutID(entry.mCutName));
-    }
-    */
   }
   //////////////////////////////////////////
   /// RUNNING ANALYSIS /////////////////////
   //////////////////////////////////////////
   analysis.run();
-  analysis.saveResult();
   //////////////////////////////////////////
   /// SAVING RESULTS ///////////////////////
   //////////////////////////////////////////
-  //analysis.saveResult();
+  analysis.saveResult();
 
 }
