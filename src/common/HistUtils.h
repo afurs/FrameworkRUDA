@@ -125,7 +125,8 @@ class Hists {
            >
   static auto makeHist1DFromMap(const Map_t &mapValues,std::string histName,std::string histTitle,bool doLabeling)->Hist_t* {
     if(mapValues.size()==0) return nullptr;
-    Hist_t *resultHist = new Hist_t(histName.c_str(),histTitle.c_str(),mapValues.size(),0,mapValues.size());
+    Hist_t *resultHist;
+    resultHist = new Hist_t(histName.c_str(),histTitle.c_str(),mapValues.size(),0,mapValues.size());
     unsigned int binPos=1;
     for(const auto &entry:mapValues) {
       if constexpr(!(helpers::common::IsSpecOf<std::tuple,typename Map_t::mapped_type>::value)) {
