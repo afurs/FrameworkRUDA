@@ -14,12 +14,11 @@ R__LOAD_LIBRARY(libRunManagerRUDA.so)
 #include "TriggerClass.h"
 #include "RunManager.h"
 
-void taskPostProcces(
-){
-  std::string periodName="LHC18p";
+void taskPostProcces(std::string periodName="LHC18p"){
+  
   //std::string pathInputData = "/home/deliner/work/data/ageing/2018/LHC18p";
-  std::string pathInputData = "/home/deliner/work/data/lumi/result2018_Full/"+periodName;
-  std::string pathOutputDir = "resultLumiRatio2018/"+periodName;
+  std::string pathInputData = "/home/deliner/work/data/lumi/result2018_Full2/"+periodName;
+  std::string pathOutputDir = "resultLumiRatio2018_Full2/"+periodName;
   gSystem->mkdir(pathOutputDir.c_str());
   std::string pathOutput = pathOutputDir+"/resultLumiRun%i.root";
   auto mapRunsToFilepaths = utilities::AnalysisUtils::makeMapRunsToFilepathsROOT(pathInputData);
@@ -78,8 +77,36 @@ void taskPostProcces(
       }
     }
   }
-  //std::vector<Triggers> vecTrg =Triggers::makeTrgNames(vecTrgNames,vecTrgClusterNames);
+  /*
+  mapCutTrgs.insert({"hist_cutInputINT7","cutINT7_INPUT"});
+  mapCutTrgs.insert({"hist_cutInput0TVX","cut0TVX_INPUT"});
+  mapCutTrgs.insert({"hist_cutInput0EMC","cut0EMC_INPUT"});
+  mapCutTrgs.insert({"hist_cutInput0MSL","cut0MSL_INPUT"});
+  mapCutTrgs.insert({"hist_cutInput0MUL","cut0MUL_INPUT"});
 
+  mapCutTrgs.insert({"hist_cutInput0TVX_AND_INT7","cut0TVX_INPUT cutINT7_INPUT"});
+  mapCutTrgs.insert({"hist_cutInput0EMC_AND_INT7","cut0EMC_INPUT cutINT7_INPUT"});
+  mapCutTrgs.insert({"hist_cutInput0MSL_AND_INT7","cut0MSL_INPUT cutINT7_INPUT"});
+  mapCutTrgs.insert({"hist_cutInput0MUL_AND_INT7","cut0MUL_INPUT cutINT7_INPUT"});
+  */
+
+  vecTrg.push_back({"hist_cutInput0TVX","hist_cutInputINT7","histRatio_cutInput0TVX_TO_INT7"});
+  vecTrg.push_back({"hist_cutInput0EMC","hist_cutInputINT7","histRatio_cutInput0EMC_TO_INT7"});
+  vecTrg.push_back({"hist_cutInput0MSL","hist_cutInputINT7","histRatio_cutInput0MSL_TO_INT7"});
+  vecTrg.push_back({"hist_cutInput0MUL","hist_cutInputINT7","histRatio_cutInput0MUL_TO_INT7"});
+
+  vecTrg.push_back({"hist_cutInput0EMC","hist_cutInput0TVX","histRatio_cutInput0EMC_TO_0TVX"});
+  vecTrg.push_back({"hist_cutInput0MSL","hist_cutInput0TVX","histRatio_cutInput0MSL_TO_0TVX"});
+  vecTrg.push_back({"hist_cutInput0MUL","hist_cutInput0TVX","histRatio_cutInput0MUL_TO_0TVX"});
+
+  vecTrg.push_back({"hist_cutInput0TVX_AND_INT7","hist_cutInputINT7","histRatio_cutInput0TVX_AND_INT7_TO_INT7"});
+  vecTrg.push_back({"hist_cutInput0EMC_AND_INT7","hist_cutInputINT7","histRatio_cutInput0EMC_AND_INT7_TO_INT7"});
+  vecTrg.push_back({"hist_cutInput0MSL_AND_INT7","hist_cutInputINT7","histRatio_cutInput0MSL_AND_INT7_TO_INT7"});
+  vecTrg.push_back({"hist_cutInput0MUL_AND_INT7","hist_cutInputINT7","histRatio_cutInput0MUL_AND_INT7_TO_INT7"});
+
+  vecTrg.push_back({"hist_cutInput0EMC_AND_INT7","hist_cutInput0TVX","histRatio_cutInput0EMC_AND_INT7_TO_0TVX"});
+  vecTrg.push_back({"hist_cutInput0MSL_AND_INT7","hist_cutInput0TVX","histRatio_cutInput0MSL_AND_INT7_TO_0TVX"});
+  vecTrg.push_back({"hist_cutInput0MUL_AND_INT7","hist_cutInput0TVX","histRatio_cutInput0MUL_AND_INT7_TO_0TVX"});
   ////////////////////////
   for(const auto& entry: mapRunsToFilepaths) {
     auto runnum = entry.first;
