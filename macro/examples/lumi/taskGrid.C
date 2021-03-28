@@ -14,7 +14,6 @@ R__LOAD_LIBRARY(libRunManagerRUDA.so)
 #include "AnalysisUtils.h"
 #include "TTree.h"
 #include "TFile.h"
-#include <omp.h>
 void taskGrid(std::string pathInputData="",std::size_t nParallelJobs=1) {
   bool isLocal;
   std::string pathToLogbook;
@@ -96,7 +95,9 @@ void taskGrid(std::string pathInputData="",std::size_t nParallelJobs=1) {
           , vecArgs);
     }
     else {
-      taskAnalysisFull(vecArgs[iTask]);
+      for(const auto &entry: vecArgs) {
+        taskAnalysisFull(entry);
+      }
     }
   }
   ofstream out;

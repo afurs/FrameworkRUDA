@@ -87,8 +87,10 @@ class Hists {
     for(const auto&entry:vecTupleNames) {
       Hist_t *h1 = dynamic_cast<Hist_t*>(listInput.FindObject(std::get<0>(entry).c_str()));
       if(h1==nullptr) continue;
+      if(h1->GetEntries()==0) continue;
       Hist_t *h2 = dynamic_cast<Hist_t*>(listInput.FindObject(std::get<1>(entry).c_str()));
       if(h2==nullptr) continue;
+      if(h2->GetEntries()==0) continue;
       TAxis *axis = h1->GetXaxis();
       Hist_t *h3 = dynamic_cast<Hist_t *>(h1->Clone(std::get<2>(entry).c_str()));
       h3->SetTitle(std::get<2>(entry).c_str());

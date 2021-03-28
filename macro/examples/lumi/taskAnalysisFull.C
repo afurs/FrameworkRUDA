@@ -79,6 +79,12 @@ void taskAnalysisFull(/*  vecPathInputData
     ,{"0MUL-B-NOPF-ALLNOTRD",".*MUL.*-B-NOPF-ALLNOTRD"}
     ,{"0MUL-B-NOPF-FAST",".*MUL.*-B-NOPF-FAST"}
     ,{"0MUL-B-NOPF-MUFAST",".*MUL.*-B-NOPF-MUFAST"}
+
+    ,{"INT7-INPUT",".*INT7.*-B-.*"}
+    ,{"0TVX-INPUT",".*0TVX.*-B-.*"}
+    ,{"0EMC-INPUT",".*EMC.*-B-.*"}
+    ,{"0MSL-INPUT",".*MSL.*-B-.*"}
+    ,{"0MUL-INPUT",".*MUL.*-B-.*"}
   };
   for(const auto& entry: mapName2TrgInputs) {
     auto nTrgs = analysis.mData.mTrgClassManager.defineTrgSumReg(entry.first,entry.first,entry.second);
@@ -95,8 +101,10 @@ void taskAnalysisFull(/*  vecPathInputData
   auto cutVertexTrack = [] (const Data_t &data)->bool { return (data.fNcontTrack>0)&&(data.fVertexTrack_Z>-30)&&(data.fVertexTrack_Z<30);return false;};
   auto cutVertexGlobal = [] (const Data_t &data)->bool {return (data.fNcontGlobal>0)&&(data.fVertexGlobal_Z>-10)&&(data.fVertexGlobal_Z<10);};
   auto cutVertexSPD = [] (const Data_t &data)->bool {return (data.fNcontSPD>0)&&(data.fVertexSPD_Z>-10)&&(data.fVertexSPD_Z<10);};
-  auto cutV0_v1 = [](const Data_t &data)->bool {return (((data.fTimeV0A+data.fTimeV0C)>11.5) && ((data.fTimeV0A+data.fTimeV0C)<17.5) && ((data.fTimeV0A-data.fTimeV0C)>5.5) &&  ((data.fTimeV0A-data.fTimeV0C)<11.5));};
-  auto cutV0_v2 = [](const Data_t &data)->bool {return (((data.fTimeV0A+data.fTimeV0C)>10) && ((data.fTimeV0A+data.fTimeV0C)<18) && ((data.fTimeV0A-data.fTimeV0C)>4) &&  ((data.fTimeV0A-data.fTimeV0C)<12));};
+  auto cutV0_v1 = [](const Data_t &data)->bool {return (((data.fTimeV0A+data.fTimeV0C)>11.5) && ((data.fTimeV0A+data.fTimeV0C)<17.5)
+                                                        && ((data.fTimeV0A-data.fTimeV0C)>5.5) &&  ((data.fTimeV0A-data.fTimeV0C)<11.5));};
+  auto cutV0_v2 = [](const Data_t &data)->bool {return (((data.fTimeV0A+data.fTimeV0C)>10) && ((data.fTimeV0A+data.fTimeV0C)<18)
+                                                        && ((data.fTimeV0A-data.fTimeV0C)>4) &&  ((data.fTimeV0A-data.fTimeV0C)<12));};
   auto cutC0TVX_CENTNOTRD = [] (const Data_t &data)->bool {return data.checkTrgClass("C0TVX-B-NOPF-CENTNOTRD");};
   auto cutC0TVX_CENT = [] (const Data_t &data)->bool {return data.checkTrgClass("C0TVX-B-NOPF-CENT");};
   auto cutC0TVX_FAST = [] (const Data_t &data)->bool {return data.checkTrgClass("C0TVX-B-NOPF-FAST");};
@@ -127,6 +135,12 @@ void taskAnalysisFull(/*  vecPathInputData
   auto cut0MUL_FAST = [] (const Data_t &data)->bool {return data.checkTrgClass("0MUL-B-NOPF-FAST");};
   auto cut0MUL_MUFAST = [] (const Data_t &data)->bool {return data.checkTrgClass("0MUL-B-NOPF-MUFAST");};
   auto cut0MUL_ALLNOTRD = [] (const Data_t &data)->bool {return data.checkTrgClass("0MUL-B-NOPF-ALLNOTRD");};
+
+  auto cutINT7_INPUT = [] (const Data_t &data)->bool {return data.checkTrgClass("INT7-INPUT");};
+  auto cut0TVX_INPUT = [] (const Data_t &data)->bool {return data.checkTrgClass("0TVX-INPUT");};
+  auto cut0EMC_INPUT = [] (const Data_t &data)->bool {return data.checkTrgClass("0EMC-INPUT");};
+  auto cut0MSL_INPUT = [] (const Data_t &data)->bool {return data.checkTrgClass("0MSL-INPUT");};
+  auto cut0MUL_INPUT = [] (const Data_t &data)->bool {return data.checkTrgClass("0MUL-INPUT");};
   analysis.mCutObjectManager.makeCutBit("noCuts","noCuts",cutNoCuts);
   analysis.mCutObjectManager.makeCutBit("noPileup","Excluded pileup from events",cutNoPileup);
   analysis.mCutObjectManager.makeCutBit("noPileupLowMult","Excluded pileup from events,IsPileupFromSPD()",cutNoPileupLowMult);
@@ -138,7 +152,7 @@ void taskAnalysisFull(/*  vecPathInputData
 
   analysis.mCutObjectManager.makeCutBit("V0_v1","(timeV0A+timeV0C)>11.5 && (timeV0A+timeV0C)<17.5 && (timeV0A-timeV0C)>5.5 && (timeV0A-timeV0C)<11.5",cutV0_v1);
   analysis.mCutObjectManager.makeCutBit("V0_v2","(timeV0A+timeV0C)>10 && (timeV0A+timeV0C)<18 && (timeV0A-timeV0C)>4 && (timeV0A-timeV0C)<12",cutV0_v2);
-
+  //9 cuts
   analysis.mCutObjectManager.makeCutBit("cutC0TVX_CENTNOTRD","cutC0TVX_CENTNOTRD",cutC0TVX_CENTNOTRD);
   analysis.mCutObjectManager.makeCutBit("cutC0TVX_CENT","cutC0TVX_CENT",cutC0TVX_CENT);
   analysis.mCutObjectManager.makeCutBit("cutC0TVX_FAST","cutC0TVX_FAST",cutC0TVX_FAST);
@@ -169,6 +183,12 @@ void taskAnalysisFull(/*  vecPathInputData
   analysis.mCutObjectManager.makeCutBit("cut0MUL_MUFAST","cut0MUL_MUFAST",cut0MUL_MUFAST);
   analysis.mCutObjectManager.makeCutBit("cut0MUL_ALLNOTRD","cut0MUL_ALLNOTRD",cut0MUL_ALLNOTRD);
 
+  analysis.mCutObjectManager.makeCutBit("cutINT7_INPUT","cutINT7_INPUT",cutINT7_INPUT);
+  analysis.mCutObjectManager.makeCutBit("cut0TVX_INPUT","cut0TVX_INPUT",cut0TVX_INPUT);
+  analysis.mCutObjectManager.makeCutBit("cut0EMC_INPUT","cut0EMC_INPUT",cut0EMC_INPUT);
+  analysis.mCutObjectManager.makeCutBit("cut0MSL_INPUT","cut0MSL_INPUT",cut0MSL_INPUT);
+  analysis.mCutObjectManager.makeCutBit("cut0MUL_INPUT","cut0MUL_INPUT",cut0MUL_INPUT);
+
   //////////////////////////////////////////
   /// ANALYSIS OUTPUT //////////////////////
   //////////////////////////////////////////
@@ -189,12 +209,20 @@ void taskAnalysisFull(/*  vecPathInputData
     ,analysis.mCutObjectManager.makeNamedEventCutID("V0_v2")
     ,analysis.mCutObjectManager.makeNamedEventCutID("V0_v1 noPileup")
     ,analysis.mCutObjectManager.makeNamedEventCutID("V0_v1 noPileupLowMult")
+    ,analysis.mCutObjectManager.makeNamedEventCutID("V0_v1 PhysSel")
     ,analysis.mCutObjectManager.makeNamedEventCutID("V0_v2 noPileup")
-    ,analysis.mCutObjectManager.makeNamedEventCutID("V0_v2 noPileupLowMult")
+    ,analysis.mCutObjectManager.makeNamedEventCutID("V0_v2 noPileupLowMult")    
+    ,analysis.mCutObjectManager.makeNamedEventCutID("V0_v2 PhysSel")
+
     ,analysis.mCutObjectManager.makeNamedEventCutID("V0_v1 noPileup PhysSel vertexGlobal")
-    ,analysis.mCutObjectManager.makeNamedEventCutID("V0_v2 noPileup PhysSel vertexGlobal")
-    ,analysis.mCutObjectManager.makeNamedEventCutID("V0_v2 noPileupLowMult PhysSel vertexTrack")
+    ,analysis.mCutObjectManager.makeNamedEventCutID("V0_v1 noPileup PhysSel vertexTrack")
     ,analysis.mCutObjectManager.makeNamedEventCutID("V0_v1 noPileupLowMult PhysSel vertexGlobal")
+    ,analysis.mCutObjectManager.makeNamedEventCutID("V0_v1 noPileupLowMult PhysSel vertexTrack")
+
+    ,analysis.mCutObjectManager.makeNamedEventCutID("V0_v2 noPileup PhysSel vertexGlobal")
+    ,analysis.mCutObjectManager.makeNamedEventCutID("V0_v2 noPileup PhysSel vertexTrack")
+    ,analysis.mCutObjectManager.makeNamedEventCutID("V0_v2 noPileupLowMult PhysSel vertexGlobal")
+    ,analysis.mCutObjectManager.makeNamedEventCutID("V0_v2 noPileupLowMult PhysSel vertexTrack")
 /*    ,analysis.mCutObjectManager.makeNamedEventCutID("cutC0TVX_CENTNOTRD")
     ,analysis.mCutObjectManager.makeNamedEventCutID("cutC0TVX_CENT")
     ,analysis.mCutObjectManager.makeNamedEventCutID("cutC0TVX_FAST")
@@ -238,6 +266,17 @@ void taskAnalysisFull(/*  vecPathInputData
       mapCutTrgs.insert({trgHistName,trgCutName});
     }
   }
+
+  mapCutTrgs.insert("hist_cutInputINT7","cutINT7_INPUT");
+  mapCutTrgs.insert("hist_cutInput0TVX","cut0TVX_INPUT");
+  mapCutTrgs.insert("hist_cutInput0EMC","cut0EMC_INPUT");
+  mapCutTrgs.insert("hist_cutInput0MSL","cut0MSL_INPUT");
+  mapCutTrgs.insert("hist_cutInput0MUL","cut0MUL_INPUT");
+
+  mapCutTrgs.insert("hist_cutInput0TVX_AND_INT7","cut0TVX_INPUT cutINT7_INPUT");
+  mapCutTrgs.insert("hist_cutInput0EMC_AND_INT7","cut0EMC_INPUT cutINT7_INPUT");
+  mapCutTrgs.insert("hist_cutInput0MSL_AND_INT7","cut0MSL_INPUT cutINT7_INPUT");
+  mapCutTrgs.insert("hist_cutInput0MUL_AND_INT7","cut0MUL_INPUT cutINT7_INPUT");
   std::cout<<"\n=================================\n";
   for(const auto& entry:mapCutTrgs) {
     std::string histName = entry.first;
