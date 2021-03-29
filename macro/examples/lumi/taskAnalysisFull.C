@@ -88,6 +88,7 @@ void taskAnalysisFull(/*  vecPathInputData
     ,{"0V0H-INPUT",".*V0H.*-B-.*"}
     ,{"0V0M-INPUT",".*V0M.*-B-.*"}
     ,{"0VHM-INPUT",".*VHM.*-B-.*"}
+    ,{"VHMV0M-INPUT",".*VHMV0M.*-B-.*"}
   };
   for(const auto& entry: mapName2TrgInputs) {
     auto nTrgs = analysis.mData.mTrgClassManager.defineTrgSumReg(entry.first,entry.first,entry.second);
@@ -147,6 +148,7 @@ void taskAnalysisFull(/*  vecPathInputData
   auto cut0V0H_INPUT = [] (const Data_t &data)->bool {return data.checkTrgClass("0V0H-INPUT");};
   auto cut0V0M_INPUT = [] (const Data_t &data)->bool {return data.checkTrgClass("0V0M-INPUT");};
   auto cut0VHM_INPUT = [] (const Data_t &data)->bool {return data.checkTrgClass("0VHM-INPUT");};
+  auto cutVHMV0M_INPUT = [] (const Data_t &data)->bool {return data.checkTrgClass("VHMV0M-INPUT");};
   analysis.mCutObjectManager.makeCutBit("noCuts","noCuts",cutNoCuts);
   analysis.mCutObjectManager.makeCutBit("noPileup","Excluded pileup from events",cutNoPileup);
   analysis.mCutObjectManager.makeCutBit("noPileupLowMult","Excluded pileup from events,IsPileupFromSPD()",cutNoPileupLowMult);
@@ -198,6 +200,7 @@ void taskAnalysisFull(/*  vecPathInputData
   analysis.mCutObjectManager.makeCutBit("cut0V0H_INPUT","cut0V0H_INPUT",cut0V0H_INPUT);
   analysis.mCutObjectManager.makeCutBit("cut0V0M_INPUT","cut0V0M_INPUT",cut0V0M_INPUT);
   analysis.mCutObjectManager.makeCutBit("cut0VHM_INPUT","cut0VHM_INPUT",cut0VHM_INPUT);
+  analysis.mCutObjectManager.makeCutBit("cutVHMV0M_INPUT","cutVHMV0M_INPUT",cutVHMV0M_INPUT);
 
   //////////////////////////////////////////
   /// ANALYSIS OUTPUT //////////////////////
@@ -288,6 +291,7 @@ void taskAnalysisFull(/*  vecPathInputData
   mapCutTrgs.insert({"hist_cutInput0V0H","cut0V0H_INPUT"});
   mapCutTrgs.insert({"hist_cutInput0V0M","cut0V0M_INPUT"});
   mapCutTrgs.insert({"hist_cutInput0VHM","cut0VHM_INPUT"});
+  mapCutTrgs.insert({"hist_cutInputVHMV0M","cutVHMV0M_INPUT"});
 
   mapCutTrgs.insert({"hist_cutInput0TVX_AND_INT7","cut0TVX_INPUT cutINT7_INPUT"});
   mapCutTrgs.insert({"hist_cutInput0EMC_AND_INT7","cut0EMC_INPUT cutINT7_INPUT"});
@@ -297,6 +301,7 @@ void taskAnalysisFull(/*  vecPathInputData
   mapCutTrgs.insert({"hist_cutInput0V0H_AND_INT7","cut0V0H_INPUT cutINT7_INPUT"});
   mapCutTrgs.insert({"hist_cutInput0V0M_AND_INT7","cut0V0M_INPUT cutINT7_INPUT"});
   mapCutTrgs.insert({"hist_cutInput0VHM_AND_INT7","cut0VHM_INPUT cutINT7_INPUT"});
+  mapCutTrgs.insert({"hist_cutInputVHMV0M_AND_INT7","cutVHMV0M_INPUT cutINT7_INPUT"});
   std::cout<<"\n=================================\n";
   for(const auto& entry:mapCutTrgs) {
     std::string histName = entry.first;
