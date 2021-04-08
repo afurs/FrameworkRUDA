@@ -52,6 +52,7 @@ struct GridUtils{
   static std::map<unsigned int,std::string> makeMapRun2Path(std::string dirpath);
   static std::map<unsigned int, std::string> makeMapRun2Filepath(std::string dirpath);
   static std::vector<std::string> makeListFilepath(std::string dirpath);
+  static std::vector<std::string> makeListFilepath(std::string dirpath, std::string filename);
   static TList* getCollectionFromXML(TString filename);
 };
 

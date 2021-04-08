@@ -8,20 +8,30 @@ R__LOAD_LIBRARY(libGridRUDA.so)
 #include <vector>
 #include "GridUtils.h"
 #include "merge.C"
+std::size_t calculateNthreads(const std::string &command) {
+  TString line;
+  FILE *fp = gSystem->OpenPipe(command.c_str(), "r");
+  line.Gets(fp);
+  gSystem->ClosePipe(fp);
+  int nThreads = std::stoi(std::string{line})-1;
+  return nThreads;
+}
 //Example:
 //pathGridResultDir = TaskAgeingT0_pass1_2018_LHC18p/TaskAgeingT0_pass1_2018_LHC18p_result
 //should contain dirs like "000%i" with runnums
 //filenameGridMask = "output.root"
 //if filenameLocalMask equals to "" then filenameLocalMask = "TaskAgeingT0_pass1_2018_LHC18p_result_run%i.root"
-void downloadResult_batch(std::string pathGridResultDir="TaskRatioT0_pass1_2018_LHC18m/TaskRatioT0_pass1_2018_LHC18m_result"
+void downloadResult_batch(std::string pathGridResultDir="TaskRatioT0_pass1_2018_LHC18i/TaskRatioT0_pass1_2018_LHC18i_result"
                     ,std::string filenameGrid="output.root"
                     ,std::string filenameLocalMask=""
-                    ,std::size_t nMaxFilesToMerge=200) {
+                    ,std::size_t nMaxFilesToMerge=200
+                    ,std::size_t nMaxThreads=5) {
   auto mapRun2Path = utilities::grid::GridUtils::makeMapRun2Path(pathGridResultDir);
   std::string localPwd = gSystem->pwd();
   std::string pathToFrameworkRUDA = gSystem->Getenv("RUDA_FRAMEWORK_BUILD_PATH");
   std::string commandBegin;
   std::string commandEnd;
+  std::string cmdForCnt = "ps aux | grep \"merge.C\" | wc -l";
   //commandBegin = "aliroot -b -q .x ";
   commandEnd ="";
   commandBegin = "nice nohup aliroot -b -q .x ";
@@ -36,6 +46,7 @@ void downloadResult_batch(std::string pathGridResultDir="TaskRatioT0_pass1_2018_
   bool isFirst=true;
 
   for(const auto &entry:mapRun2Path ) {
+    //gSystem->Sleep(5000);
     cout<<"\n=============================================================";
     unsigned int runnum = entry.first;
     cout<<"\nRUN: "<<runnum<<"\nPATH: "<<entry.second;
@@ -97,7 +108,15 @@ void downloadResult_batch(std::string pathGridResultDir="TaskRatioT0_pass1_2018_
     command+=std::string{"\\\"\\)"};
     command+=std::string{commandEnd};
     command+=std::string{Form(" >> log_run%i.log &",runnum)};
-    
+
+
+    //int nThreads=0;
+    int nThreads = calculateNthreads(cmdForCnt);
+    while(nThreads>nMaxThreads) {
+      gSystem->Sleep(30000);
+      nThreads = calculateNthreads(cmdForCnt);
+    }
+    //nThreads++;
     std::cout<<"\n\nCOMMAND: "<<command;
     gSystem->Exec(command.c_str());
     //gSystem->Exec(std::string{commandBegin+pathToMergerMacro}.c_str());

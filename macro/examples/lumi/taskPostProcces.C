@@ -14,28 +14,99 @@ R__LOAD_LIBRARY(libRunManagerRUDA.so)
 #include "TriggerClass.h"
 #include "RunManager.h"
 
-void taskPostProcces(){
-
+void taskPostProcces(std::string periodName="LHC18p"){
+  
   //std::string pathInputData = "/home/deliner/work/data/ageing/2018/LHC18p";
-  std::string pathInputData = "input_lumi";
-  std::string pathOutput = "output/resultLumiRun%i.root";
+  std::string pathInputData = "/home/deliner/work/data/lumi/result2018_Full2/"+periodName;
+  std::string pathOutputDir = "resultLumiRatio2018_Full2/"+periodName;
+  gSystem->mkdir(pathOutputDir.c_str());
+  std::string pathOutput = pathOutputDir+"/resultLumiRun%i.root";
   auto mapRunsToFilepaths = utilities::AnalysisUtils::makeMapRunsToFilepathsROOT(pathInputData);
   //INTERFACE FOR TRIGGER NAMES IN HISTS
+  std::vector<std::string> vecTrgNames = {
+    "C0TVX"
+    ,"CINT7"
+    ,"0EMC"
+    ,"0MSL"
+    ,"0MUL"
+  };
+  std::vector<std::string> vecTrgClusterNames = {
+     "CENTNOTRD"
+      ,"CENT"
+      ,"FAST"
+      ,"MUFAST"
+    ,"ALLNOTRD"
+  };
+
+  /*
   struct Triggers {
-    std::string mC0TVX;
+    std::string mTrgNameNum;
     std::string mCINT7;
-    std::string mRatioCINT7_C0TVX;
-    static std::vector<Triggers> makeTrgNames(const std::vector<std::string> &vecTrgSubNames) {
+    std::string mRatioNum_CINT7;
+    const std::string histNamePrefix = "hist_cut";
+    static std::vector<Triggers> makeTrgNames(const std::vector<std::string> &vecTrgNames
+                                              ,const std::vector<std::string> &vecTrgClusterNames) {
       std::vector<Triggers> vecTrg;
-      for(const auto &entry:vecTrgSubNames) {
-        vecTrg.push_back(Triggers{std::string{"C0TVX_"+entry},std::string{"CINT7_"+entry},std::string{"Ratio_CINT7_C0TVX_"+entry}});
+      for(const auto &trgName: vecTrgNames) {
+        if(trgName=="CINT7") continue;
+        for(const auto &trgCluster: vecTrgNames) {
+          std::string histNameNum = histNamePrefix+trgName+"_"+trgCluster;
+          std::string histNameCINT7 = histNamePrefix+"CINT7"+"_"+trgCluster;
+          std::string histNameRatio= histNamePrefix+trgName+"_CINT7_"+trgCluster;
+          vecTrg.push_back(Triggers{histNameNum,histNameCINT7,histNameRatio});
+        }
       }
       return vecTrg;
     }
   };
-  std::vector<std::string> vecTrgSubNamesMain = {"ALLNOTRD","CENTNOTRD","CENT","FAST","MUFAST"};
-  std::vector<Triggers> vecTrg =Triggers::makeTrgNames(vecTrgSubNamesMain);
+  */
+  const std::string histNamePrefix = "hist_cut";
+  std::vector<std::tuple<std::string,std::string,std::string>> vecTrg;
+  for(const auto &trgName: vecTrgNames) {
+    if(trgName=="CINT7") continue;
+    for(const auto &trgCluster: vecTrgClusterNames) {
+      std::string histNameNum = histNamePrefix+trgName+"_"+trgCluster;
+      std::string histNameCINT7 = histNamePrefix+"CINT7"+"_"+trgCluster;
+      std::string histNameRatio= histNamePrefix+trgName+"_CINT7_"+trgCluster;
+      vecTrg.push_back({histNameNum,histNameCINT7,histNameRatio});
+      if(trgName!="C0TVX") {
+        std::string histNameNum = histNamePrefix+trgName+"_"+trgCluster;
+        std::string histNameCINT7 = histNamePrefix+"C0TVX"+"_"+trgCluster;
+        std::string histNameRatio= histNamePrefix+trgName+"_C0TVX_"+trgCluster;
+        vecTrg.push_back({histNameNum,histNameCINT7,histNameRatio});
+      }
+    }
+  }
+  /*
+  mapCutTrgs.insert({"hist_cutInputINT7","cutINT7_INPUT"});
+  mapCutTrgs.insert({"hist_cutInput0TVX","cut0TVX_INPUT"});
+  mapCutTrgs.insert({"hist_cutInput0EMC","cut0EMC_INPUT"});
+  mapCutTrgs.insert({"hist_cutInput0MSL","cut0MSL_INPUT"});
+  mapCutTrgs.insert({"hist_cutInput0MUL","cut0MUL_INPUT"});
 
+  mapCutTrgs.insert({"hist_cutInput0TVX_AND_INT7","cut0TVX_INPUT cutINT7_INPUT"});
+  mapCutTrgs.insert({"hist_cutInput0EMC_AND_INT7","cut0EMC_INPUT cutINT7_INPUT"});
+  mapCutTrgs.insert({"hist_cutInput0MSL_AND_INT7","cut0MSL_INPUT cutINT7_INPUT"});
+  mapCutTrgs.insert({"hist_cutInput0MUL_AND_INT7","cut0MUL_INPUT cutINT7_INPUT"});
+  */
+
+  vecTrg.push_back({"hist_cutInput0TVX","hist_cutInputINT7","histRatio_cutInput0TVX_TO_INT7"});
+  vecTrg.push_back({"hist_cutInput0EMC","hist_cutInputINT7","histRatio_cutInput0EMC_TO_INT7"});
+  vecTrg.push_back({"hist_cutInput0MSL","hist_cutInputINT7","histRatio_cutInput0MSL_TO_INT7"});
+  vecTrg.push_back({"hist_cutInput0MUL","hist_cutInputINT7","histRatio_cutInput0MUL_TO_INT7"});
+
+  vecTrg.push_back({"hist_cutInput0EMC","hist_cutInput0TVX","histRatio_cutInput0EMC_TO_0TVX"});
+  vecTrg.push_back({"hist_cutInput0MSL","hist_cutInput0TVX","histRatio_cutInput0MSL_TO_0TVX"});
+  vecTrg.push_back({"hist_cutInput0MUL","hist_cutInput0TVX","histRatio_cutInput0MUL_TO_0TVX"});
+
+  vecTrg.push_back({"hist_cutInput0TVX_AND_INT7","hist_cutInputINT7","histRatio_cutInput0TVX_AND_INT7_TO_INT7"});
+  vecTrg.push_back({"hist_cutInput0EMC_AND_INT7","hist_cutInputINT7","histRatio_cutInput0EMC_AND_INT7_TO_INT7"});
+  vecTrg.push_back({"hist_cutInput0MSL_AND_INT7","hist_cutInputINT7","histRatio_cutInput0MSL_AND_INT7_TO_INT7"});
+  vecTrg.push_back({"hist_cutInput0MUL_AND_INT7","hist_cutInputINT7","histRatio_cutInput0MUL_AND_INT7_TO_INT7"});
+
+  vecTrg.push_back({"hist_cutInput0EMC_AND_INT7","hist_cutInput0TVX","histRatio_cutInput0EMC_AND_INT7_TO_0TVX"});
+  vecTrg.push_back({"hist_cutInput0MSL_AND_INT7","hist_cutInput0TVX","histRatio_cutInput0MSL_AND_INT7_TO_0TVX"});
+  vecTrg.push_back({"hist_cutInput0MUL_AND_INT7","hist_cutInput0TVX","histRatio_cutInput0MUL_AND_INT7_TO_0TVX"});
   ////////////////////////
   for(const auto& entry: mapRunsToFilepaths) {
     auto runnum = entry.first;
@@ -60,23 +131,23 @@ void taskPostProcces(){
       continue;
     }
     listInputAll->SetOwner(true);
-    for(const auto &subNames:vecTrg) {
+/*    for(const auto &subNames:vecTrg) {
       for(const auto &obj:(*listInputAll)) {
         TH1F *hist = dynamic_cast<TH1F *>(obj);
         std::string histNameC0TVX = hist->GetName();
-        if(histNameC0TVX.find(subNames.mC0TVX)!=std::string::npos) {
+        if(histNameC0TVX.find(subNames.mTrgNameNum)!=std::string::npos) {
           std::string histNameCINT7 = histNameC0TVX;
-          histNameCINT7.replace(histNameCINT7.find(subNames.mC0TVX),subNames.mC0TVX.size(),subNames.mCINT7);
+          histNameCINT7.replace(histNameCINT7.find(subNames.mTrgNameNum),subNames.mTrgNameNum.size(),subNames.mCINT7);
           std::string histNameRatio = histNameC0TVX;
-          histNameRatio.replace(histNameRatio.find(subNames.mC0TVX),subNames.mC0TVX.size(),subNames.mRatioCINT7_C0TVX);
+          histNameRatio.replace(histNameRatio.find(subNames.mTrgNameNum),subNames.mTrgNameNum.size(),subNames.mRatioNum_CINT7);
           vecTupleHistNames.push_back({histNameC0TVX,histNameCINT7,histNameRatio});
           //cout<<endl<<histNameC0TVX<<"|"<<histNameCINT7<<"|"<<histNameRatio<<endl;
         }
       }
     }
-
+*/
     //Calculate ratio
-    TList *listRatio = utilities::Hists::makeDividedHists<TH1F>(*listInputAll,vecTupleHistNames,"b",true);
+    TList *listRatio = utilities::Hists::makeDividedHists<TH1F>(*listInputAll,vecTrg,"b",true);
     //listRatio->Print();
     listOutput->AddAll(listRatio);
     //Add run number to hist title

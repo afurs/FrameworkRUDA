@@ -103,6 +103,25 @@ std::vector<std::string> GridUtils::makeListFilepath(std::string dirpath) {
   return vecListFilepath;
 }
 /*******************************************************************************************************************/
+std::vector<std::string> GridUtils::makeListFilepath(std::string dirpath, std::string filename) {
+  if(!gGrid) TGrid::Connect("alien://");
+  std::string commandFind = "find ";
+  commandFind+=dirpath;
+  commandFind+=" *";
+  commandFind+=filename;
+  std::vector<std::string> vecListFilepath;
+  TGridResult *alienResult = gGrid->Command(commandFind.c_str());
+  for(const auto entryMap: (*alienResult)) {
+    const TMap *mapResult = dynamic_cast<const TMap *>(entryMap);
+    //TObjString *objstName = dynamic_cast<TObjString *>(mapResult->GetValue("name"));
+    TObjString *objstPath = dynamic_cast<TObjString *>(mapResult->GetValue("lfn"));
+    TObjString *objstPathUrl = dynamic_cast<TObjString *>(mapResult->GetValue("turl"));
+    TObjString *objstSize = dynamic_cast<TObjString *>(mapResult->GetValue("size"));
+    vecListFilepath.push_back(std::string{objstPath->GetString()});
+  }
+  return vecListFilepath;
+}
+/*******************************************************************************************************************/
 TList* GridUtils::getCollectionFromXML(TString filename) {
   TList *fFileGroupList = new TList;
   TXMLEngine xml;

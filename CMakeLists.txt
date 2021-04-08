@@ -3,7 +3,7 @@
 ###############################
 
 # cmake settings
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.17)
 project(
         FrameworkRUDA
         DESCRIPTION "Framework RUDA - ROOT Utilities for Data Analysis"
