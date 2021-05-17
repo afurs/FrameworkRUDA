@@ -10,6 +10,14 @@ alienv enter AliPhysics/latest-master-o2
 install.sh /path/to/src /path/to/installation /path/to/local/logbook /path/to/grid/ruda /path/to/grid/logbook
 ```
 
+
+Example:
+```
+alienv enter AliPhysics/latest-master-o2
+source install.sh . ~/work/RUDA ~/work/logbook_alice
+```
+
+
 Add following lines into .bashrc
 ```
 source /path/to/installation/bin/env_ruda.sh

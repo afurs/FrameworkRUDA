@@ -39,6 +39,28 @@ class AnalysisUtils {
       }
     }
   }
+  template<typename ObjectType
+           ,typename = typename std::enable_if<std::is_base_of<TObject,ObjectType>::value>::type>
+  static void getObjectRecursively(TList *listObjects,TList *coll,std::string objName) {
+    for(const auto &entry:(*coll))  {
+      TObject *obj = (TObject *)entry;
+      if(dynamic_cast<TKey *>(obj)!=nullptr)  {
+       obj=(TObject *) dynamic_cast<TKey *>(obj)->ReadObj();
+      }
+      if(dynamic_cast<TDirectoryFile *>(obj)!=nullptr) {
+        obj = dynamic_cast<TObject *> (dynamic_cast<TDirectoryFile *>(obj)->GetListOfKeys());
+      }
+      if(dynamic_cast<ObjectType *>(obj)!=nullptr) {
+        if(std::string{obj->GetName()}==objName) {
+          listObjects->Add(obj);
+        }
+      }
+      if(dynamic_cast<TList *>(obj)!=nullptr) {
+        getObjectRecursively<ObjectType>(listObjects,dynamic_cast<TList *>(obj),objName);
+      }
+    }
+  }
+
   template<typename ObjectType>
   static TList* getListObjFromFile(const TFile &inputFile)  {
     TList *listResult = new TList();

@@ -40,6 +40,7 @@ std::vector<RunConditionTable> RunConditionTable::getVecRCT(std::string filepath
     tr->GetEntry(iEntry);
     vecResult.push_back(entryRCT);
   }
+  tf.Close();
   return vecResult;
 }
 
@@ -60,7 +61,7 @@ int RunConditionTable::getYear(unsigned int runnum) {
   if(208365<=runnum&&runnum<=247170)	return 2015;
   if(247171<=runnum&&runnum<=267254)	return 2016;
   if(267258<=runnum&&runnum<=282900)	return 2017;
-  if(282901<=runnum<300000)	return 2018;
+  if(282901<=runnum&&runnum<300000)	return 2018;
   return 0;
 }
 int RunConditionTable::getFromPeriod(std::string period) {
