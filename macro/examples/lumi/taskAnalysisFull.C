@@ -22,11 +22,15 @@ struct TrgRatioStruct:TrgRatioRawStruct{
 };
 using EventCutID_t = EventCutID<50>;
 using DataOutput_t = TH1F;
+using DataOutput2D_t = TH2F;
+
 using Entry_t = TrgRatioStruct;
 
-using Analysis_t = AnalysisManagerBase<Entry_t,EventCutID_t,DataOutput_t>;
+using Analysis_t = AnalysisManagerBase<Entry_t,EventCutID_t,DataOutput_t,DataOutput2D_t>;
 using Data_t = Analysis_t::Data_t;
 using DataOutputObject_t = Analysis_t::DataOutputObject_t;
+using DataOutputObject2D_t = typename std::tuple_element<0,Analysis_t::DataOutputTuple_t>::type::DataOutput_t;
+
 template class EventCutID<50>;
 template class AnalysisManagerBase<Entry_t,EventCutID_t,DataOutput_t>;
 void taskAnalysisFull(/*  vecPathInputData
@@ -109,6 +113,9 @@ void taskAnalysisFull(/*  vecPathInputData
                                                         && ((data.fTimeV0A-data.fTimeV0C)>5.5) &&  ((data.fTimeV0A-data.fTimeV0C)<11.5));};
   auto cutV0_v2 = [](const Data_t &data)->bool {return (((data.fTimeV0A+data.fTimeV0C)>10) && ((data.fTimeV0A+data.fTimeV0C)<18)
                                                         && ((data.fTimeV0A-data.fTimeV0C)>4) &&  ((data.fTimeV0A-data.fTimeV0C)<12));};
+  auto cutV0Ellipse = [](const Data_t &data)->bool {
+    return (pow((data.fTimeV0A-10.7)/0.9,2)+pow((data.fTimeV0C-2.8)/0.8,2))<1;
+  };
   auto cutC0TVX_CENTNOTRD = [] (const Data_t &data)->bool {return data.checkTrgClass("C0TVX-B-NOPF-CENTNOTRD");};
   auto cutC0TVX_CENT = [] (const Data_t &data)->bool {return data.checkTrgClass("C0TVX-B-NOPF-CENT");};
   auto cutC0TVX_FAST = [] (const Data_t &data)->bool {return data.checkTrgClass("C0TVX-B-NOPF-FAST");};
@@ -160,7 +167,9 @@ void taskAnalysisFull(/*  vecPathInputData
 
   analysis.mCutObjectManager.makeCutBit("V0_v1","(timeV0A+timeV0C)>11.5 && (timeV0A+timeV0C)<17.5 && (timeV0A-timeV0C)>5.5 && (timeV0A-timeV0C)<11.5",cutV0_v1);
   analysis.mCutObjectManager.makeCutBit("V0_v2","(timeV0A+timeV0C)>10 && (timeV0A+timeV0C)<18 && (timeV0A-timeV0C)>4 && (timeV0A-timeV0C)<12",cutV0_v2);
-  //9 cuts
+
+  analysis.mCutObjectManager.makeCutBit("cutV0Ellipse","cutV0Ellipse",cutV0Ellipse);
+  //10 cuts
   analysis.mCutObjectManager.makeCutBit("cutC0TVX_CENTNOTRD","cutC0TVX_CENTNOTRD",cutC0TVX_CENTNOTRD);
   analysis.mCutObjectManager.makeCutBit("cutC0TVX_CENT","cutC0TVX_CENT",cutC0TVX_CENT);
   analysis.mCutObjectManager.makeCutBit("cutC0TVX_FAST","cutC0TVX_FAST",cutC0TVX_FAST);
@@ -202,6 +211,7 @@ void taskAnalysisFull(/*  vecPathInputData
   analysis.mCutObjectManager.makeCutBit("cut0VHM_INPUT","cut0VHM_INPUT",cut0VHM_INPUT);
   analysis.mCutObjectManager.makeCutBit("cutVHMV0M_INPUT","cutVHMV0M_INPUT",cutVHMV0M_INPUT);
 
+  
   //////////////////////////////////////////
   /// ANALYSIS OUTPUT //////////////////////
   //////////////////////////////////////////
@@ -224,18 +234,17 @@ void taskAnalysisFull(/*  vecPathInputData
     ,analysis.mCutObjectManager.makeNamedEventCutID("V0_v1 noPileupLowMult")
     ,analysis.mCutObjectManager.makeNamedEventCutID("V0_v1 PhysSel")
     ,analysis.mCutObjectManager.makeNamedEventCutID("V0_v2 noPileup")
-    ,analysis.mCutObjectManager.makeNamedEventCutID("V0_v2 noPileupLowMult")    
+    ,analysis.mCutObjectManager.makeNamedEventCutID("V0_v2 noPileupLowMult")
     ,analysis.mCutObjectManager.makeNamedEventCutID("V0_v2 PhysSel")
-
     ,analysis.mCutObjectManager.makeNamedEventCutID("V0_v1 noPileup PhysSel vertexGlobal")
     ,analysis.mCutObjectManager.makeNamedEventCutID("V0_v1 noPileup PhysSel vertexTrack")
     ,analysis.mCutObjectManager.makeNamedEventCutID("V0_v1 noPileupLowMult PhysSel vertexGlobal")
     ,analysis.mCutObjectManager.makeNamedEventCutID("V0_v1 noPileupLowMult PhysSel vertexTrack")
-
     ,analysis.mCutObjectManager.makeNamedEventCutID("V0_v2 noPileup PhysSel vertexGlobal")
     ,analysis.mCutObjectManager.makeNamedEventCutID("V0_v2 noPileup PhysSel vertexTrack")
     ,analysis.mCutObjectManager.makeNamedEventCutID("V0_v2 noPileupLowMult PhysSel vertexGlobal")
     ,analysis.mCutObjectManager.makeNamedEventCutID("V0_v2 noPileupLowMult PhysSel vertexTrack")
+    ,analysis.mCutObjectManager.makeNamedEventCutID("V0_v1 noPileup PhysSel vertexTrack cutV0Ellipse")
 /*    ,analysis.mCutObjectManager.makeNamedEventCutID("cutC0TVX_CENTNOTRD")
     ,analysis.mCutObjectManager.makeNamedEventCutID("cutC0TVX_CENT")
     ,analysis.mCutObjectManager.makeNamedEventCutID("cutC0TVX_FAST")
@@ -325,9 +334,10 @@ void taskAnalysisFull(/*  vecPathInputData
   //////////////////////////////////////////
   //Preparing differential ratio
   struct OutputDataEntry {
-    typedef std::function<void(const Data_t &,DataOutputObject_t *)> FuncFill_t;
-    typedef helpers::hists::HistHelper<DataOutput_t>::HistParam HistParam;
+    typedef std::function<void(const Data_t &,DataOutputObject2D_t *)> FuncFill_t;
+    typedef helpers::hists::HistHelper<DataOutput2D_t>::HistParam HistParam;
     OutputDataEntry(std::string histNameTitle,Int_t nBinsX,Double_t lowBinX,Double_t upBinX
+                    ,Int_t nBinsY,Double_t lowBinY,Double_t upBinY
                     ,FuncFill_t funcFill,std::string cutName):
       mFuncFill(funcFill),mCutName(cutName)
     {
@@ -336,6 +346,9 @@ void taskAnalysisFull(/*  vecPathInputData
        mHistParam.mNBinsX=nBinsX;
        mHistParam.mLowBinX=lowBinX;
        mHistParam.mUpBinX=upBinX;
+       mHistParam.mNBinsY=nBinsY;
+       mHistParam.mLowBinY=lowBinY;
+       mHistParam.mUpBinY=upBinY;
     }
     OutputDataEntry(HistParam histParam,FuncFill_t funcFill,std::string cutName):
       mHistParam(histParam),mFuncFill(funcFill),mCutName(cutName) {}
@@ -366,325 +379,44 @@ void taskAnalysisFull(/*  vecPathInputData
 //  std::string stCut_C0TVX_ALLNOTRD_FullCuts_noVertex_v2 = "cutC0TVX_ALLNOTRD cutCINT7_ALLNOTRD V0_v2 noPileupLowMult PhysSel";
 //  std::string stCut_CINT7_ALLNOTRD_FullCuts_noVertex_v2 = "cutCINT7_ALLNOTRD V0_v2 noPileupLowMult PhysSel";
 
-  //Ratio as func of Orbit
-  auto funcFillOrbit = [] (const Data_t &data,DataOutputObject_t *outputPtr) {outputPtr->mDataOutput.Fill(data.fOrbit);};
-  vecOutputRatioC0TVX.emplace_back(
-        "hOrbit_C0TVX_CENTNOTRD_FullCuts",18,0,18000000
-        ,funcFillOrbit
-        ,stCut_C0TVX_CENTNOTRD_FullCuts_noVertex_v1 + " vertexGlobal");
-
-  vecOutputRatioC0TVX.emplace_back(
-        "hOrbit_C0TVX_ALLNOTRD_FullCuts",18,0,18000000
-        ,funcFillOrbit
-        ,stCut_C0TVX_ALLNOTRD_FullCuts_noVertex_v1 + " vertexGlobal");
-  //CINT7
-  vecOutputRatioCINT7.emplace_back(
-        "hOrbit_CINT7_CENTNOTRD_FullCuts",18,0,18000000
-        ,funcFillOrbit
-        ,stCut_CINT7_CENTNOTRD_FullCuts_noVertex_v1 + " vertexGlobal");
-
-  vecOutputRatioCINT7.emplace_back(
-        "hOrbit_CINT7_ALLNOTRD_FullCuts",18,0,18000000
-        ,funcFillOrbit
-        ,stCut_CINT7_ALLNOTRD_FullCuts_noVertex_v1 + " vertexGlobal");
-
-  //Ratio as func of BC
-
-  //C0TVX
-  auto funcFillBC = [] (const Data_t &data,DataOutputObject_t *outputPtr) {outputPtr->mDataOutput.Fill(data.fBC);};
-  vecOutputRatioC0TVX.emplace_back(
-        "hBC_C0TVX_CENTNOTRD_FullCuts",3600,0,3600
-        ,funcFillBC
-        ,stCut_C0TVX_CENTNOTRD_FullCuts_noVertex_v1 + " vertexGlobal");
-
-  vecOutputRatioC0TVX.emplace_back(
-        "hBC_C0TVX_ALLNOTRD_FullCuts",3600,0,3600
-        ,funcFillBC
-        ,stCut_C0TVX_ALLNOTRD_FullCuts_noVertex_v1 + " vertexGlobal");
-  //CINT7
-  vecOutputRatioCINT7.emplace_back(
-        "hBC_CINT7_CENTNOTRD_FullCuts",3600,0,3600
-        ,funcFillBC
-        ,stCut_CINT7_CENTNOTRD_FullCuts_noVertex_v1 + " vertexGlobal");
-
-  vecOutputRatioCINT7.emplace_back(
-        "hBC_CINT7_ALLNOTRD_FullCuts",3600,0,3600
-        ,funcFillBC
-        ,stCut_CINT7_ALLNOTRD_FullCuts_noVertex_v1 + " vertexGlobal");
-  //Preparing as output data
-
-  //Ratio as func of global vertex
-  auto funcFillVertexGlobal = [](const Data_t &data,DataOutputObject_t *outputPtr) {
-    if(data.fVertexGlobal_Z!=0)outputPtr->mDataOutput.Fill(data.fVertexGlobal_Z);
+  //////////////////////////////////////////////////////////////
+  //
+  auto funcFillV0AV0C = [](const Data_t &data,DataOutputObject2D_t *outputPtr) {
+    outputPtr->mDataOutput.Fill(data.fTimeV0A,data.fTimeV0C);
   };
   //C0TVX
   vecOutputRatioC0TVX.emplace_back(
-        "hVertex_C0TVX_CENTNOTRD_FullCuts",100,-50,50
-        ,funcFillVertexGlobal
-        ,stCut_C0TVX_CENTNOTRD_FullCuts_noVertex_v1);
-  vecOutputRatioC0TVX.emplace_back(
-        "hVertex_C0TVX_ALLNOTRD_FullCuts",100,-50,50
-        ,funcFillVertexGlobal
-        ,stCut_C0TVX_ALLNOTRD_FullCuts_noVertex_v1);
+        "hV0AV0C_0TVX_FullCuts",2000,0,20,2000,0,20
+        ,funcFillV0AV0C
+        ,"V0_v1 noPileup PhysSel vertexTrack cutINT7_INPUT cut0TVX_INPUT");
   //CINT7
   vecOutputRatioCINT7.emplace_back(
-        "hVertex_CINT7_CENTNOTRD_FullCuts",100,-50,50
-        ,funcFillVertexGlobal
-        ,stCut_CINT7_CENTNOTRD_FullCuts_noVertex_v1);
-  vecOutputRatioCINT7.emplace_back(
-       "hVertex_CINT7_ALLNOTRD_FullCuts",100,-50,50
-       ,funcFillVertexGlobal
-       ,stCut_CINT7_ALLNOTRD_FullCuts_noVertex_v1);
+        "hV0AV0C_INT7_FullCuts",2000,0,20,2000,0,20
+        ,funcFillV0AV0C
+        ,"V0_v1 noPileup PhysSel vertexTrack cutINT7_INPUT");
 
-  //Ratio as func of track vertex
-  auto funcFillVertexTrack = [](const Data_t &data,DataOutputObject_t *outputPtr) {
-    if(data.fNcontTrack>0)outputPtr->mDataOutput.Fill(data.fVertexTrack_Z);
-  };
+  //Ellipse
   //C0TVX
   vecOutputRatioC0TVX.emplace_back(
-        "hVertexTrk_C0TVX_CENTNOTRD_FullCuts",100,-50,50
-        ,funcFillVertexTrack
-        ,stCut_C0TVX_CENTNOTRD_FullCuts_noVertex_v1);
-  vecOutputRatioC0TVX.emplace_back(
-        "hVertexTrk_C0TVX_ALLNOTRD_FullCuts",100,-50,50
-        ,funcFillVertexTrack
-        ,stCut_C0TVX_ALLNOTRD_FullCuts_noVertex_v1);
+        "hV0AV0C_0TVX_FullCuts_el",2000,0,20,2000,0,20
+        ,funcFillV0AV0C
+        ,"V0_v1 noPileup PhysSel vertexTrack cutINT7_INPUT cut0TVX_INPUT cutV0Ellipse");
   //CINT7
   vecOutputRatioCINT7.emplace_back(
-        "hVertexTrk_CINT7_CENTNOTRD_FullCuts",100,-50,50
-        ,funcFillVertexTrack
-        ,stCut_CINT7_CENTNOTRD_FullCuts_noVertex_v1);
-  vecOutputRatioCINT7.emplace_back(
-       "hVertexTrk_CINT7_ALLNOTRD_FullCuts",100,-50,50
-       ,funcFillVertexTrack
-       ,stCut_CINT7_ALLNOTRD_FullCuts_noVertex_v1);
-
-  //Ratio as func of SPD vertex
-  auto funcFillVertexSPD = [](const Data_t &data,DataOutputObject_t *outputPtr) {
-    if(data.fNcontSPD>0)outputPtr->mDataOutput.Fill(data.fVertexSPD_Z);
-  };
-  //C0TVX
-  vecOutputRatioC0TVX.emplace_back(
-        "hVertexSPD_C0TVX_CENTNOTRD_FullCuts",100,-50,50
-        ,funcFillVertexSPD
-        ,stCut_C0TVX_CENTNOTRD_FullCuts_noVertex_v1);
-  vecOutputRatioC0TVX.emplace_back(
-        "hVertexSPD_C0TVX_ALLNOTRD_FullCuts",100,-50,50
-        ,funcFillVertexSPD
-        ,stCut_C0TVX_ALLNOTRD_FullCuts_noVertex_v1);
-  //CINT7
-  vecOutputRatioCINT7.emplace_back(
-        "hVertexSPD_CINT7_CENTNOTRD_FullCuts",100,-50,50
-        ,funcFillVertexSPD
-        ,stCut_CINT7_CENTNOTRD_FullCuts_noVertex_v1);
-  vecOutputRatioCINT7.emplace_back(
-        "hVertexSPD_CINT7_ALLNOTRD_FullCuts",100,-50,50
-        ,funcFillVertexSPD
-        ,stCut_CINT7_ALLNOTRD_FullCuts_noVertex_v1);
-
-  //Ratio as func of SPD vertex contributors
-  auto funcFillNContSPD = [](const Data_t &data,DataOutputObject_t *outputPtr) {
-    outputPtr->mDataOutput.Fill(data.fNcontSPD);
-  };
-  //C0TVX
-  vecOutputRatioC0TVX.emplace_back(
-        "hNContSPD_C0TVX_CENTNOTRD_FullCuts",200,-100,100
-        ,funcFillNContSPD
-        ,stCut_C0TVX_CENTNOTRD_FullCuts_noVertex_v1);
-  vecOutputRatioC0TVX.emplace_back(
-        "hNContSPD_C0TVX_ALLNOTRD_FullCuts",200,-100,100
-        ,funcFillNContSPD
-        ,stCut_C0TVX_ALLNOTRD_FullCuts_noVertex_v1);
-  //CINT7
-  vecOutputRatioCINT7.emplace_back(
-        "hNContSPD_CINT7_CENTNOTRD_FullCuts",200,-100,100
-        ,funcFillNContSPD
-        ,stCut_CINT7_CENTNOTRD_FullCuts_noVertex_v1);
-  vecOutputRatioCINT7.emplace_back(
-        "hNContSPD_CINT7_ALLNOTRD_FullCuts",200,-100,100
-        ,funcFillNContSPD
-        ,stCut_CINT7_ALLNOTRD_FullCuts_noVertex_v1);
-
-  //Ratio as func of T0 counter time bits
-  /*
-  auto funcFillTimeBitsT0 = [](const Data_t &data,DataOutputObject_t *outputPtr) {
-    for(int iCh=0;iCh<24;iCh++) {
-      if(data.fBitsT0timeCounter->TestBitNumber(iCh)) outputPtr->mDataOutput.Fill(iCh);
-    }
-  };
-  //C0TVX
-  vecOutputRatioC0TVX.emplace_back(
-        "hTimeBitsT0_C0TVX_CENTNOTRD_FullCuts",24,0,24
-        ,funcFillTimeBitsT0
-        ,stCut_C0TVX_CENTNOTRD_FullCuts_noVertex_v1);
-  vecOutputRatioC0TVX.emplace_back(
-        "hTimeBitsT0_C0TVX_ALLNOTRD_FullCuts",24,0,24
-        ,funcFillTimeBitsT0
-        ,stCut_C0TVX_ALLNOTRD_FullCuts_noVertex_v1);
-  //CINT7
-  vecOutputRatioCINT7.emplace_back(
-        "hTimeBitsT0_CINT7_CENTNOTRD_FullCuts",24,0,24
-        ,funcFillTimeBitsT0
-        ,stCut_CINT7_CENTNOTRD_FullCuts_noVertex_v1);
-  vecOutputRatioCINT7.emplace_back(
-        "hTimeBitsT0_CINT7_ALLNOTRD_FullCuts",24,0,24
-        ,funcFillTimeBitsT0
-        ,stCut_CINT7_ALLNOTRD_FullCuts_noVertex_v1);
-  */
-   //Ratio as func of T0 counter time bits, side A
-  auto funcFillTimeBitsT0_sideA = [](const Data_t &data,DataOutputObject_t *outputPtr) {
-    for(int iCh=12;iCh<24;iCh++) {
-      if(data.fBitsT0timeCounter->TestBitNumber(iCh)) outputPtr->mDataOutput.Fill(iCh-12);
-    }
-  };
-  //C0TVX
-  vecOutputRatioC0TVX.emplace_back(
-        "hTimeBitsT0_C0TVX_CENTNOTRD_FullCuts_sideA",12,0,12
-        ,funcFillTimeBitsT0_sideA
-        ,stCut_C0TVX_CENTNOTRD_FullCuts_v1);
-  vecOutputRatioC0TVX.emplace_back(
-        "hTimeBitsT0_C0TVX_ALLNOTRD_FullCuts_sideA",12,0,12
-        ,funcFillTimeBitsT0_sideA
-        ,stCut_C0TVX_ALLNOTRD_FullCuts_v1);
-  //CINT7
-  vecOutputRatioCINT7.emplace_back(
-        "hTimeBitsT0_CINT7_CENTNOTRD_FullCuts_sideA",12,0,12
-        ,funcFillTimeBitsT0_sideA
-        ,stCut_CINT7_CENTNOTRD_FullCuts_v1);
-  vecOutputRatioCINT7.emplace_back(
-        "hTimeBitsT0_CINT7_ALLNOTRD_FullCuts_sideA",12,0,12
-        ,funcFillTimeBitsT0_sideA
-        ,stCut_CINT7_ALLNOTRD_FullCuts_v1);
-  //Ratio as func of T0 counter time bits, side C
-  auto funcFillTimeBitsT0_sideC = [](const Data_t &data,DataOutputObject_t *outputPtr) {
-    for(int iCh=0;iCh<12;iCh++) {
-      if(data.fBitsT0timeCounter->TestBitNumber(iCh)) outputPtr->mDataOutput.Fill(iCh);
-    }
-  };
-  //C0TVX
-  vecOutputRatioC0TVX.emplace_back(
-        "hTimeBitsT0_C0TVX_CENTNOTRD_FullCuts_sideC",12,0,12
-        ,funcFillTimeBitsT0_sideC
-        ,stCut_C0TVX_CENTNOTRD_FullCuts_v1);
-  vecOutputRatioC0TVX.emplace_back(
-        "hTimeBitsT0_C0TVX_ALLNOTRD_FullCuts_sideC",12,0,12
-        ,funcFillTimeBitsT0_sideC
-        ,stCut_C0TVX_ALLNOTRD_FullCuts_v1);
-  //CINT7
-  vecOutputRatioCINT7.emplace_back(
-        "hTimeBitsT0_CINT7_CENTNOTRD_FullCuts_sideC",12,0,12
-        ,funcFillTimeBitsT0_sideC
-        ,stCut_CINT7_CENTNOTRD_FullCuts_v1);
-  vecOutputRatioCINT7.emplace_back(
-        "hTimeBitsT0_CINT7_ALLNOTRD_FullCuts_sideC",12,0,12
-        ,funcFillTimeBitsT0_sideC
-        ,stCut_CINT7_ALLNOTRD_FullCuts_v1);
-///////////////////////////////////////
-  //Ratio as func of T0 counter time bits, side A
-  auto funcFillTimeBitsT0_sideA_sh6 = [](const Data_t &data,DataOutputObject_t *outputPtr) {
-    for(int iCh=12;iCh<24;iCh++) {
-      if(data.fBitsT0timeCounter->TestBitNumber(iCh)) outputPtr->mDataOutput.Fill((iCh-12+6)%12);
-    }
-  };
-  //C0TVX
-  vecOutputRatioC0TVX.emplace_back(
-        "hTimeBitsT0_C0TVX_CENTNOTRD_FullCuts_sh6_sideA",12,0,12
-        ,funcFillTimeBitsT0_sideA_sh6
-        ,stCut_C0TVX_CENTNOTRD_FullCuts_v1);
-  vecOutputRatioC0TVX.emplace_back(
-        "hTimeBitsT0_C0TVX_ALLNOTRD_FullCuts_sh6_sideA",12,0,12
-        ,funcFillTimeBitsT0_sideA_sh6
-        ,stCut_C0TVX_ALLNOTRD_FullCuts_v1);
-  //CINT7
-  vecOutputRatioCINT7.emplace_back(
-        "hTimeBitsT0_CINT7_CENTNOTRD_FullCuts_sh6_sideA",12,0,12
-        ,funcFillTimeBitsT0_sideA
-        ,stCut_CINT7_CENTNOTRD_FullCuts_v1);
-  vecOutputRatioCINT7.emplace_back(
-        "hTimeBitsT0_CINT7_ALLNOTRD_FullCuts_sh6_sideA",12,0,12
-        ,funcFillTimeBitsT0_sideA
-        ,stCut_CINT7_ALLNOTRD_FullCuts_v1);
-  //Ratio as func of T0 counter time bits, side C
-  auto funcFillTimeBitsT0_sideC_sh6 = [](const Data_t &data,DataOutputObject_t *outputPtr) {
-    for(int iCh=0;iCh<12;iCh++) {
-      if(data.fBitsT0timeCounter->TestBitNumber(iCh)) outputPtr->mDataOutput.Fill((iCh+6)%12);
-    }
-  };
-  //C0TVX
-  vecOutputRatioC0TVX.emplace_back(
-       "hTimeBitsT0_C0TVX_CENTNOTRD_FullCuts_sh6_sideC",12,0,12
-       ,funcFillTimeBitsT0_sideC_sh6
-       ,stCut_C0TVX_CENTNOTRD_FullCuts_v1);
-  vecOutputRatioC0TVX.emplace_back(
-       "hTimeBitsT0_C0TVX_ALLNOTRD_FullCuts_sh6_sideC",12,0,12
-       ,funcFillTimeBitsT0_sideC_sh6
-       ,stCut_C0TVX_ALLNOTRD_FullCuts_v1);
-  //CINT7
-  vecOutputRatioCINT7.emplace_back(
-       "hTimeBitsT0_CINT7_CENTNOTRD_FullCuts_sh6_sideC",12,0,12
-       ,funcFillTimeBitsT0_sideC_sh6
-       ,stCut_CINT7_CENTNOTRD_FullCuts_v1);
-  vecOutputRatioCINT7.emplace_back(
-       "hTimeBitsT0_CINT7_ALLNOTRD_FullCuts_sh6_sideC",12,0,12
-       ,funcFillTimeBitsT0_sideC_sh6
-       ,stCut_CINT7_ALLNOTRD_FullCuts_v1);
-///////////////////////////////////////
-  //Ratio as func of diffV0
-  auto funcFillDiffAmpV0 = [](const Data_t &data,DataOutputObject_t *outputPtr) {
-    outputPtr->mDataOutput.Fill(data.fTimeV0A-data.fTimeV0C);
-  };
-  //C0TVX
-  vecOutputRatioC0TVX.emplace_back(
-        "hDiffAmpV0_C0TVX_CENTNOTRD_FullCuts",600,-30,30
-        ,funcFillDiffAmpV0
-        ,"cutC0TVX_CENTNOTRD cutCINT7_CENTNOTRD noPileup PhysSel");
-  vecOutputRatioC0TVX.emplace_back(
-        "hDiffAmpV0_C0TVX_ALLNOTRD_FullCuts",600,-30,30
-        ,funcFillDiffAmpV0
-        ,"cutC0TVX_ALLNOTRD cutCINT7_ALLNOTRD noPileup PhysSel");
-  //CINT7
-  vecOutputRatioCINT7.emplace_back(
-        "hDiffAmpV0_CINT7_CENTNOTRD_FullCuts",600,-30,30
-        ,funcFillDiffAmpV0
-        ,"cutCINT7_CENTNOTRD noPileup PhysSel");
-  vecOutputRatioCINT7.emplace_back(
-        "hDiffAmpV0_CINT7_ALLNOTRD_FullCuts",600,-30,30
-        ,funcFillDiffAmpV0
-        ,"cutCINT7_ALLNOTRD noPileup PhysSel");
-
-
-  //Ratio as func of sumV0
-  auto funcFillSumAmpV0 = [](const Data_t &data,DataOutputObject_t *outputPtr) {
-    outputPtr->mDataOutput.Fill(data.fTimeV0A+data.fTimeV0C);
-  };
-  //C0TVX
-  vecOutputRatioC0TVX.emplace_back(
-        "hSumAmpV0_C0TVX_CENTNOTRD_FullCuts",600,-30,30
-        ,funcFillSumAmpV0
-        ,"cutC0TVX_CENTNOTRD cutCINT7_CENTNOTRD noPileup PhysSel");
-  vecOutputRatioC0TVX.emplace_back(
-        "hSumAmpV0_C0TVX_ALLNOTRD_FullCuts",600,-30,30
-        ,funcFillSumAmpV0
-        ,"cutC0TVX_ALLNOTRD cutCINT7_ALLNOTRD noPileup PhysSel");
-  //CINT7
-  vecOutputRatioCINT7.emplace_back(
-        "hSumAmpV0_CINT7_CENTNOTRD_FullCuts",600,-30,30
-        ,funcFillSumAmpV0
-        ,"cutCINT7_CENTNOTRD noPileup PhysSel");
-  vecOutputRatioCINT7.emplace_back(
-        "hSumAmpV0_CINT7_ALLNOTRD_FullCuts",600,-30,30
-        ,funcFillSumAmpV0
-        ,"cutCINT7_ALLNOTRD noPileup PhysSel");
-
+        "hV0AV0C_INT7_FullCuts_el",2000,0,20,2000,0,20
+        ,funcFillV0AV0C
+        ,"V0_v1 noPileup PhysSel vertexTrack cutINT7_INPUT cutV0Ellipse");
+  //////////////////////////////////////////////////////////////
   //Prepare ratio names for calculations
   std::vector<OutputDataEntry> vecOutputRatioAll;
   std::copy(vecOutputRatioC0TVX.begin(),vecOutputRatioC0TVX.end(),std::back_inserter(vecOutputRatioAll));
   std::copy(vecOutputRatioCINT7.begin(),vecOutputRatioCINT7.end(),std::back_inserter(vecOutputRatioAll));
   for(const auto &entry:vecOutputRatioAll) {
     //auto histName = entry.mHistName;
-    analysis.mDataOutputManager.makeDataOutput(
-          DataOutput_t{entry.mHistParam.mHistName.c_str(),entry.mHistParam.mHistTitle.c_str()
-                       ,entry.mHistParam.mNBinsX,entry.mHistParam.mLowBinX,entry.mHistParam.mUpBinX}
+    std::get<0>(analysis.mDataOutputTuple).makeDataOutput(
+          DataOutput2D_t{entry.mHistParam.mHistName.c_str(),entry.mHistParam.mHistTitle.c_str()
+                       ,entry.mHistParam.mNBinsX,entry.mHistParam.mLowBinX,entry.mHistParam.mUpBinX
+                       ,entry.mHistParam.mNBinsY,entry.mHistParam.mLowBinY,entry.mHistParam.mUpBinY}
           ,entry.mFuncFill
           ,analysis.mCutObjectManager.makeNamedEventCutID(entry.mCutName));
   }
