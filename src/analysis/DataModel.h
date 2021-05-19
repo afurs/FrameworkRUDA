@@ -22,71 +22,11 @@ class DataOutputObject {
   typedef DataOutputType DataOutput_t;
   typedef std::function<void(const Data_t&,DataOutputObject_t *)> Functor_t;
   typedef typename EventCutID_t::template EventCutIDmap<unsigned int> MapEventCutIDtoBin_t;
-  
-//  template<typename = void >
-//  DataOutputObject(Data_t &data,std::string name,std::string title,const std::vector<EventCutID_t> &vecEventCutIDtoBin):
-//    mRefData(data),mEventCutID(EventCutID_t{}) {}
-//  template<typename... Args>
-//  DataOutputObject(Args&&... args){}
-  
-//  template<typename = typename std::enable_if_t<helpers::hists::HistHelper<DataOutputType>::Ndims==1 > >
-//  template<typename DataType = std::enable_if_t<helpers::hists::HistHelper<DataOutputType>::Ndims==1,Data_t > >
-/*
-  template<typename DataT = int>
-  DataOutputObject(DataT &data,std::string name,std::string title,const std::vector<EventCutID_t> &vecEventCutIDtoBin):
-    mRefData(data),mEventCutID(EventCutID_t{}) {}
-
-  template<typename DataT = std::enable_if_t<helpers::hists::HistHelper<DataOutputType>::Ndims==1,Data_t > >
-  DataOutputObject(DataT &data,std::string name,std::string title,const std::vector<EventCutID_t> &vecEventCutIDtoBin):
-    mRefData(data),mEventCutID(EventCutID_t{})
-  {
-    mIsEventCutIDCounter=true;
-    mFuncDataFill = [](const Data_t& data,DataOutputObject_t *outputPtr)->void {outputPtr->fillData(data.mEventCutID);};
-    int nBin=1;
-    for(const auto& entry: vecEventCutIDtoBin)  {
-      auto [it, isNew] = mMapEventCutIDToBin.insert({entry,nBin});
-      if(isNew) nBin++;
-    }
-    nBin--;
-    mDataOutput = DataOutput_t{name.c_str(),title.c_str(),nBin,0,static_cast<double>(nBin)};
-    for(const auto& entry: mMapEventCutIDToBin) {
-      mDataOutput.GetXaxis()->SetBinLabel(entry.second,entry.first.mEventCutIDname.c_str());
-    }
-    //mFuncDataFill = mFuncDataFillEventCutIDbins;
-  }
-*/
-  /*******************************************************************************************************************/
-//  template<typename=void>
-//  DataOutputObject(Data_t &data,std::string name,std::string title,const std::vector<EventCutID_t> &vecEventCutIDtoBin,const EventCutID_t &eventCutID):
-//    mRefData(data),mEventCutID(EventCutID_t{}) {}
-
-
-//  template<typename = typename std::enable_if_t<helpers::hists::HistHelper<DataOutputType>::Ndims==1 > >
-
-//  template<typename DataT = int>
-//  DataOutputObject(DataT &data,std::string name,std::string title,const std::vector<EventCutID_t> &vecEventCutIDtoBin,const EventCutID_t &eventCutID):
-//    mRefData(data),mEventCutID(eventCutID){}
-
-//  template<typename DataT = std::enable_if_t<helpers::hists::HistHelper<DataOutputType>::Ndims==1,Data_t> >
   DataOutputObject(Data_t &data,std::string name,std::string title,const std::vector<EventCutID_t> &vecEventCutIDtoBin,const EventCutID_t eventCutID = {}):
     mRefData(data),mEventCutID(eventCutID)
   {
     mIsEventCutIDCounter=true;
-/*    mFuncDataFill = [](const Data_t& data,DataOutputObject_t *outputPtr)->void {outputPtr->fillData(data.mEventCutID);};
-    int nBin=1;
-    for(const auto& entry: vecEventCutIDtoBin)  {
-      auto [it, isNew] = mMapEventCutIDToBin.insert({entry,nBin});
-      if(isNew) nBin++;
-    }
-    nBin--;
-    mDataOutput = DataOutput_t{name.c_str(),title.c_str(),nBin,0,static_cast<double>(nBin)};
-    for(const auto& entry: mMapEventCutIDToBin) {
-      mDataOutput.GetXaxis()->SetBinLabel(entry.second,entry.first.mEventCutIDname.c_str());
-    }
-*/
     prepareStatHist<DataOutputType>(name,title,vecEventCutIDtoBin);
-    
-    //mFuncDataFill = mFuncDataFillEventCutIDbins;
   }
   /*******************************************************************************************************************/
   DataOutputObject(Data_t &data,DataOutput_t &dataOutput,const Functor_t &func):
