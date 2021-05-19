@@ -7,7 +7,7 @@
 #include "DataModel.h"
 #include <tuple>
 template<typename DataType,typename EventCutIDtype,typename DataOutputType,typename... DataOutputTypes>
-class AnalysisManagerBase:public AnalysisBase<AnalysisManagerBase<DataType,EventCutIDtype,DataOutputType>>
+class AnalysisManagerBase:public AnalysisBase<AnalysisManagerBase<DataType,EventCutIDtype,DataOutputType,DataOutputTypes...>>
 {
  public:
   typedef DataInput<DataType,EventCutIDtype> Data_t;
@@ -19,7 +19,7 @@ class AnalysisManagerBase:public AnalysisBase<AnalysisManagerBase<DataType,Event
   typedef CutObjectManager<Data_t> CutObjectManager_t;
   typedef DataOutputManager<Data_t,DataOutputType> DataOutputManager_t;
   typedef typename DataOutputManager_t::DataOutput_t DataOutputObject_t;
-  typedef AnalysisBase<AnalysisManagerBase<DataType,EventCutIDtype,DataOutputType>> AnalysisBase_t;
+  typedef AnalysisBase<AnalysisManagerBase<DataType,EventCutIDtype,DataOutputType,DataOutputTypes...>> AnalysisBase_t;
 //  typedef CutType Cut_t;
   AnalysisManagerBase():mCutObjectManager(CutObjectManager_t(mData)),mDataOutputManager(DataOutputManager_t(mData))
   ,mDataOutputTuple(DataOutputTuple_t(DataOutputManager<Data_t,DataOutputTypes>(mData)...)) {}
@@ -35,16 +35,26 @@ class AnalysisManagerBase:public AnalysisBase<AnalysisManagerBase<DataType,Event
     if constexpr(AnalysisHelper::has_initState<Data_t>::value)  mData.initState();
     mCutObjectManager.fillEventCutID();
     mDataOutputManager.fillData();
-    std::apply([&](const auto&... outputManager) {
+    std::apply([&](auto&... outputManager) {
                  ((outputManager.fillData()), ...);
                  }, mDataOutputTuple);
   }
   /*******************************************************************************************************************/
   template<typename T>
   void updateFinish(T &manager) {
-    for(auto& entry:manager.mVecDataOutput ) AnalysisBase_t::mListResult.Add(&(entry.mDataOutput));
+    for(auto& entry:manager.mVecDataOutput ) {
+      AnalysisBase_t::mListResult.Add(&(entry.mDataOutput));
+//      std::cout<<"\n=================\n";
+//      entry.mDataOutput.Print();
+//      std::cout<<"\n=================\n";
+    }
     for(auto& entryCountID:manager.mMapEventCutIDToDataOutput) {
-        for(auto& entry:entryCountID.second)  AnalysisBase_t::mListResult.Add(&(entry.mDataOutput));
+        for(auto& entry:entryCountID.second)  {
+          AnalysisBase_t::mListResult.Add(&(entry.mDataOutput));
+//          std::cout<<"\n-------------\n";
+//          entry.mDataOutput.Print();
+//          std::cout<<"\n-------------\n";
+        }
     }
   }
 
@@ -57,10 +67,10 @@ class AnalysisManagerBase:public AnalysisBase<AnalysisManagerBase<DataType,Event
         //entryCountID.second.fillData();
     }
     */
-    std::apply([&](const auto&... outputManager) {
+    std::apply([&](auto&... outputManager) {
                  ((updateFinish(outputManager)), ...);
                  }, mDataOutputTuple);
-    
+
   }
   Data_t mData;
   CutObjectManager_t mCutObjectManager;
