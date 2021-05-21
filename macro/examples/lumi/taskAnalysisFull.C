@@ -114,7 +114,7 @@ void taskAnalysisFull(/*  vecPathInputData
   auto cutV0_v2 = [](const Data_t &data)->bool {return (((data.fTimeV0A+data.fTimeV0C)>10) && ((data.fTimeV0A+data.fTimeV0C)<18)
                                                         && ((data.fTimeV0A-data.fTimeV0C)>4) &&  ((data.fTimeV0A-data.fTimeV0C)<12));};
   auto cutV0Ellipse = [](const Data_t &data)->bool {
-    return (pow((data.fTimeV0A-10.7)/0.9,2)+pow((data.fTimeV0C-2.8)/0.8,2))<1;
+    return (pow((data.fTimeV0A-11)/1.5,2)+pow((data.fTimeV0C-3)/1.35,2))<1;
   };
   auto cutC0TVX_CENTNOTRD = [] (const Data_t &data)->bool {return data.checkTrgClass("C0TVX-B-NOPF-CENTNOTRD");};
   auto cutC0TVX_CENT = [] (const Data_t &data)->bool {return data.checkTrgClass("C0TVX-B-NOPF-CENT");};
@@ -388,13 +388,29 @@ void taskAnalysisFull(/*  vecPathInputData
   vecOutputRatioC0TVX.emplace_back(
         "hV0AV0C_0TVX_FullCuts",2000,0,20,2000,0,20
         ,funcFillV0AV0C
-        ,"V0_v1 noPileup PhysSel vertexTrack cutINT7_INPUT cut0TVX_INPUT");
+        ,"V0_v1 noPileup PhysSel vertexTrack cutINT7_INPUT cut0TVX_INPUT");        
+  vecOutputRatioCINT7.emplace_back(
+        "hV0AV0C_0TVX_NoCut",1000,-50,50,1000,-50,50
+        ,funcFillV0AV0C
+        ,"cut0TVX_INPUT");
+
   //CINT7
   vecOutputRatioCINT7.emplace_back(
         "hV0AV0C_INT7_FullCuts",2000,0,20,2000,0,20
         ,funcFillV0AV0C
         ,"V0_v1 noPileup PhysSel vertexTrack cutINT7_INPUT");
+  vecOutputRatioCINT7.emplace_back(
+        "hV0AV0C_INT7_NoCut",1000,-50,50,1000,-50,50
+        ,funcFillV0AV0C
+        ,"cutINT7_INPUT");
 
+  //No cut
+  vecOutputRatioCINT7.emplace_back(
+        "hV0AV0C_NoCut",1000,-50,50,1000,-50,50
+        ,funcFillV0AV0C
+        ,"noCuts");
+
+  
   //Ellipse
   //C0TVX
   vecOutputRatioC0TVX.emplace_back(
