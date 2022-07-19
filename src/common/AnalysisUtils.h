@@ -9,6 +9,8 @@
 #include <boost/filesystem.hpp>
 
 #include "TFile.h"
+#include "TKey.h"
+#include "TObject.h"
 #include "TTree.h"
 #include "TList.h"
 #include "TCanvas.h"

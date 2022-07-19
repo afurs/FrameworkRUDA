@@ -83,10 +83,18 @@ std::vector<std::string> AnalysisUtils::makeVecFilepaths(std::string path, std::
 std::vector<std::string> AnalysisUtils::makeVecFilepaths(std::string path)  {
   std::vector<std::string> vecFilepaths;
   auto dirIt = boost::filesystem::recursive_directory_iterator(path);
+  for (const auto& entry : boost::make_iterator_range(dirIt,{})) {
+  //for (const auto& entry : dirIt) {
+    //if (boost::filesystem::is_regular(entry)) vecFilepaths.push_back(entry.path().filename().native());
+    if (boost::filesystem::is_regular(entry)) vecFilepaths.push_back(entry.path().native());
+  }
+
+/*
   for (const auto& entry : dirIt) {
     //if (boost::filesystem::is_regular(entry)) vecFilepaths.push_back(entry.path().filename().native());
     if (boost::filesystem::is_regular(entry)) vecFilepaths.push_back(entry.path().native());
   }
+*/
   return vecFilepaths;
 }
 /*******************************************************************************************************************/
