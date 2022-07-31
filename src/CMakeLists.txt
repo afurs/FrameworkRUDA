@@ -1,4 +1,4 @@
-add_subdirectory(analysis)
+# add_subdirectory(analysis)
 add_subdirectory(common)
 if(AliRoot_FOUND)
   add_subdirectory(grid)

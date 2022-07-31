@@ -114,6 +114,8 @@ endif()
 message(STATUS "Install path: ${CMAKE_INSTALL_PREFIX}")
 
 # define project directories
+
+add_subdirectory(Framework)
 add_subdirectory(src)
 
 install(DIRECTORY macro DESTINATION ${CMAKE_INSTALL_PREFIX})
