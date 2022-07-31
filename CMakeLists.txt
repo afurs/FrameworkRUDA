@@ -17,42 +17,8 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-find_package(ROOT CONFIG REQUIRED)
-
-if(ROOT_FOUND)
-  message(STATUS "ROOT - found")
-  message(STATUS "ROOT dir: ${ROOT_DIR}")
-  message(STATUS "ROOT include: ${ROOT_INCLUDE_DIRS}")
-else()
-  message(STATUS "ROOT - not found")
-endif()
-
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
-find_package(AliRoot)
-if(AliRoot_FOUND)
-  message(STATUS "AliROOT - found")
-  message(STATUS "AliROOT dir: ${AliRoot_DIR}")
-  message(STATUS "AliROOT include: ${AliRoot_INCLUDE_DIRS}")
-else()
-  message(STATUS "AliROOT - not found")
-endif()
-
-
-set(Boost_USE_STATIC_LIBS OFF)
-set(Boost_USE_MULTITHREADED ON)
-set(Boost_USE_STATIC_RUNTIME OFF)
-
-find_package(Boost REQUIRED COMPONENTS filesystem)
-
-if(Boost_FOUND)
-  message(STATUS "Boost include: ${Boost_INCLUDE_DIRS}")
-set(Boost_VERSION_MINOR 1.70)
-  message(STATUS "Boost lib: ${Boost_LIBRARIES}")
-
-else()
-  message(STATUS "Boost - not found")
-endif()
-
+include(cmake/PrepareDependencies.cmake)
 message(STATUS "Install path: ${CMAKE_INSTALL_PREFIX}")
 
 # define project directories
