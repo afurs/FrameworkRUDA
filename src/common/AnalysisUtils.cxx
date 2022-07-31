@@ -1,4 +1,5 @@
 #include "AnalysisUtils.h"
+#include <boost/range/iterator_range.hpp>
 using namespace utilities;
 /*******************************************************************************************************************/
 std::string AnalysisUtils::getFilename(std::string filepath) {
