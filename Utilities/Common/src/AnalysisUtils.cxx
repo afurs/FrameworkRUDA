@@ -9,7 +9,7 @@ std::string AnalysisUtils::getFilename(std::string filepath) {
 /*******************************************************************************************************************/
 unsigned int AnalysisUtils::getRunNum(std::string filepath) {
   std::string filename = getFilename(filepath);
-  auto regRunNum = std::regex{"[2][\\d]{5}"};
+  auto regRunNum = std::regex{"[1-9][\\d]{5}"};
   std::smatch sm;
   bool searchResult = std::regex_search(filename,sm,regRunNum);
   if(searchResult)  {
