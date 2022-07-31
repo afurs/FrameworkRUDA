@@ -6,7 +6,6 @@
 #include <string>
 #include <map>
 #include <vector>
-#include <boost/filesystem.hpp>
 
 #include "TFile.h"
 #include "TKey.h"
@@ -59,6 +58,7 @@ class AnalysisUtils {
   static std::vector<std::string> makeVecFilepaths(std::string path);
   static std::vector<std::string> makeVecFilepathsROOT(std::string path) {return makeVecFilepaths(path,std::regex{".*\\.root"});}
   static bool writeObjToFile(TObject *objOutput, TFile *fileOutput);
+  static bool writeObjToFile(TObject *objOutput,const std::string &filepathOutput);
 };
 }
 #endif
