@@ -2,9 +2,9 @@
 #define AnalysisManagerBase_h
 //#include <bitset>
 
-#include "AnalysisBase.h"
-#include "CutObjectManager.h"
-#include "DataModel.h"
+#include "AnalysisRUDA/AnalysisBase.h"
+#include "AnalysisRUDA/CutObjectManager.h"
+#include "AnalysisRUDA/DataModel.h"
 #include <tuple>
 template<typename DataType,typename EventCutIDtype,typename DataOutputType,typename... DataOutputTypes>
 class AnalysisManagerBase:public AnalysisBase<AnalysisManagerBase<DataType,EventCutIDtype,DataOutputType,DataOutputTypes...>>

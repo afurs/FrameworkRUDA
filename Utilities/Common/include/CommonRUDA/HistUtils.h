@@ -5,8 +5,8 @@
 
 #include "TList.h"
 
-#include "HelperHists.h"
-#include "HelperCommon.h"
+#include "CommonRUDA/HelperHists.h"
+#include "CommonRUDA/HelperCommon.h"
 
 //#include "../helpers/HelperHists.h"
 //#include "../helpers/HelperCommon.h"

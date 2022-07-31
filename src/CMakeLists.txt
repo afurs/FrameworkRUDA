@@ -1,7 +1,0 @@
-# add_subdirectory(analysis)
-add_subdirectory(common)
-if(AliRoot_FOUND)
-  add_subdirectory(grid)
-  add_subdirectory(run_manager)
-  add_subdirectory(trigger)
-endif()
