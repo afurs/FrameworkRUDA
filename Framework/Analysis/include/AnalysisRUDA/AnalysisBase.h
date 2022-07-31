@@ -14,8 +14,8 @@
 #include "TList.h"
 
 //#ifndef MACRO_RUN
-#include "HelperCommon.h"
-#include "AnalysisUtils.h"
+#include "CommonRUDA/HelperCommon.h"
+#include "CommonRUDA/AnalysisUtils.h"
 //#elseif
 //#include "../common/HelperCommon.cxx"
 //#include "../common/AnalysisUtils.cxx"

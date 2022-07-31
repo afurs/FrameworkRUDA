@@ -1,6 +1,6 @@
 #ifndef DataModel_h
 #define DataModel_h
-#include "HelperHists.h"
+#include "CommonRUDA/HelperHists.h"
 
 #include <string>
 #include <vector>
