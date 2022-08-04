@@ -1,5 +1,6 @@
 #include "CommonRUDA/AnalysisUtils.h"
 #include <boost/range/iterator_range.hpp>
+#include <boost/filesystem.hpp>
 using namespace utilities;
 /*******************************************************************************************************************/
 std::string AnalysisUtils::getFilename(std::string filepath) {
@@ -137,4 +138,11 @@ bool AnalysisUtils::writeObjToFile(TObject *objOutput, TFile *fileOutput)	{
   fileOutput->WriteObject(objOutput,objOutput->GetName(),"SingleKey");
   std::cout<<"################################################################\n";
   return true;
+}
+/*******************************************************************************************************************/
+bool AnalysisUtils::writeObjToFile(TObject *objOutput,const std::string &filepathOutput)	{
+  TFile fileOutput(filepathOutput.c_str(),"RECREATE");
+  const auto result = writeObjToFile(objOutput,&fileOutput);
+  fileOutput.Close();
+  return result;
 }

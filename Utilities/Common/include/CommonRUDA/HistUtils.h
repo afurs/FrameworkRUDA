@@ -107,9 +107,23 @@ class Hists {
   /*******************************************************************************************************************/
   template<typename Hist_t
            ,typename = typename std::enable_if<std::is_base_of<TH1,Hist_t>::value>::type>
-  static void makeHistBinNamed(Hist_t *hist, const std::map<unsigned int,std::string> &mapBinNames) {
-    if(hist==nullptr||mapBinNames.size()==0)  return;
-    TAxis *axis = hist->GetXaxis();
+  static void makeHistBinNamed(Hist_t *hist, const std::map<unsigned int,std::string> &mapBinNames, int axisNum=0) {
+    if(hist==nullptr||mapBinNames.size()==0)  {
+      return;
+    }
+    TAxis *axis=nullptr;
+    if(axisNum == 0) {
+      axis = hist->GetXaxis();
+    }
+    else if(axisNum == 1) {
+      axis = hist->GetYaxis();
+    }
+    else if(axisNum == 2) {
+      axis = hist->GetZaxis();
+    }
+    if(axis==nullptr) {
+      return;
+    }
     for(const auto &binName:mapBinNames) {
       axis->SetBinLabel(binName.first,binName.second.c_str());
     }
