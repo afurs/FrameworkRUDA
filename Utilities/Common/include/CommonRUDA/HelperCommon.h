@@ -36,6 +36,7 @@ namespace common {
    * , typename = typename std::enable_if<IsSpecOf<std::tuple,typename Map_t::mapped_type>::value>::type
    * auto makeHistFromMap(const Map_t &mapValues)->Hist_t* {return new Hist_t();}
   */
+
 } //namespace helpers
 } //namespace common
 #endif

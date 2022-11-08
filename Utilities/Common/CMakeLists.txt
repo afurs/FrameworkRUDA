@@ -4,9 +4,12 @@ set(MODULE CommonRUDA)
 # Sources in alphabetical order
 set(SRCS
     src/AnalysisUtils.cxx
+    src/DynamicTable.cxx
+    src/FunctionTraits.cxx
     src/HelperCommon.cxx
     src/HelperHists.cxx
     src/HistUtils.cxx
+    src/Trends.cxx
     )
 
 
