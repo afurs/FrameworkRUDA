@@ -43,8 +43,7 @@ using Utils = utilities::AnalysisUtils;
 void makeTrends(const std::string &pathToSrc) {
   //Load libraries
   gSystem->Load("libboost_filesystem.so");
-  gSystem->Load("libCommonRUDA.so");
-
+  gSystem->Load("$RUDA_ROOT/lib/libCommonRUDA.so");
   //Input parameters
   using Hist_t = TH1F;
   std::vector<ParameterTrends<TH1F, Hist_t> > vecParamTrendsSrc1D = {

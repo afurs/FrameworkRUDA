@@ -52,7 +52,7 @@ void processDigits(unsigned int runnum , const std::string &filepathInput="o2_ft
 void runAnalysisFull(const std::string &pathToSrc = "/data/work/run3/digits/production",const std::string &pathToOutput = "hists") {
   //Load libraries
   gSystem->Load("libboost_filesystem.so");
-  gSystem->Load("libCommonRUDA.so");
+  gSystem->Load("$RUDA_ROOT/lib/libCommonRUDA.so");
   auto mapRunToFilepaths = Utils::makeMapRunsToFilepathsROOT(pathToSrc);
   std::size_t nParallelJobs=20;
   ROOT::TProcessExecutor pool(nParallelJobs);

@@ -7,6 +7,7 @@
 
 #include "TList.h"
 
+#include "CommonRUDA/HelperCommon.h"
 namespace trends
 {
 
@@ -36,11 +37,5 @@ struct HistTrends {
   }
 };
 
-template<typename std::tuple<typename... EntryTypes> TupleEntryType, typename std::tuple<typename... InitObjTypes> TupleInitObjType>
-struct Table {
-  typedef TupleEntryType TupleEntry_t;
-  typedef TupleInitObjType TupleInitObj_t;
-  
-};
-
 }
+#endif
