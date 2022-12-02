@@ -32,7 +32,7 @@ namespace common
       fillTable(mCurrentTupleArgs,fillTextTable);
     }
     static std::string entryAsString(const typename TupleFunctorsWrapper_t::TupleResultsFunc_t &tupleResultsFunc, const std::string &delimeter) {
-      const auto vecArgsAsStrs = TupleFunctorsWrapper_t::resultsAsVecOfStrs(tupleResultsFunc);
+      const auto vecArgsAsStrs = TupleFunctorsWrapper_t::resultsAsVecOfStrs(tupleResultsFunc,delimeter);
       if(vecArgsAsStrs.size()==0) {
         return std::string{""};
       }
@@ -71,7 +71,6 @@ namespace common
       if(outputFile.is_open()) {
         if(useHeader) {
           outputFile << headerToEntry() << std::endl;
-          
         }
         for(const auto &entry: mTextTable) {
           outputFile << entry << std::endl;
@@ -91,7 +90,8 @@ namespace common
     typename TupleFunctorsWrapper_t::TupleArgsFunc_t mCurrentTupleArgs;
     std::vector<typename TupleFunctorsWrapper_t::TupleResultsFunc_t> mTable;
     std::vector<std::string> mTextTable;
-    std::array<std::string,sNfields> mArrFieldNames;
+    //std::array<std::string,sNfields> mArrFieldNames;
+    std::vector<std::string> mArrFieldNames;
     std::string mDelimeter{";"};
   };
 
