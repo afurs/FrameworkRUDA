@@ -1,8 +1,12 @@
 #ifndef FunctionTraits_h
 #define FunctionTraits_h
+
+#include "CommonRUDA/HelperCommon.h"
+
 #include <type_traits>
 #include <functional>
 #include <tuple>
+#include <vector>
 
 namespace common {
 
@@ -54,18 +58,32 @@ namespace common {
       return eval(mTupleFunctors, tupleArgsFuncs);
     }
     template<typename ArgType>
-    static std::string argAsString(const ArgType &arg) {
+    static std::string argAsString(const ArgType &arg, const std::string &delimeter=";") {
       if constexpr(std::is_same<ArgType,std::string>::value) {
         return arg;
+      }
+      else if constexpr(helpers::common::IsSpecOf<std::vector, ArgType>::value) {
+        if(arg.size()==1) {
+          return std::to_string(arg[0]);
+        }
+        else if(arg.size()>1) {
+          std::string str = std::to_string(arg[0]);
+          for(int i=1;i<arg.size();i++) {
+            str+=delimeter;
+            str+=std::to_string(arg[i]);
+          }
+          return str;
+        }
       }
       else {
         return std::to_string(arg);
       }
+      return std::string{"nan"};
     }
-    static std::vector<std::string> resultsAsVecOfStrs(const TupleResultsFunc_t &tupleResultsFunc) {
+    static std::vector<std::string> resultsAsVecOfStrs(const TupleResultsFunc_t &tupleResultsFunc, const std::string &delimeter=";") {
       std::vector<std::string> vecResult{};
-      std::apply([&vecResult] (const auto &... args) {
-        ((vecResult.push_back(argAsString(args))),...);
+      std::apply([&vecResult,&delimeter] (const auto &... args) {
+        ((vecResult.push_back(argAsString(args,delimeter))),...);
       },
       tupleResultsFunc);
       return vecResult;
