@@ -9,6 +9,7 @@ set(SRCS
     src/HelperCommon.cxx
     src/HelperHists.cxx
     src/HistUtils.cxx
+    src/InputFileManager.cxx
     src/Trends.cxx
     )
 
