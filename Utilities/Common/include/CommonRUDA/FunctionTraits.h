@@ -7,6 +7,7 @@
 #include <functional>
 #include <tuple>
 #include <vector>
+#include <string>
 
 namespace common {
 
