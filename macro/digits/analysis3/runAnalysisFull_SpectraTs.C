@@ -1,7 +1,6 @@
 #include "DataFormatsFT0/Digit.h"
 #include "DataFormatsFT0/ChannelData.h"
 #include "DataFormatsFT0/LookUpTable.h"
-#include "DataFormatsParameters/GRPLHCIFData.h"
 #include "FT0Base/Geometry.h"
 
 #include <TH2F.h>
@@ -16,7 +15,9 @@
 #include "CommonRUDA/HelperHists.h"
 #include "CommonRUDA/OutputHistManager.h"
 
+#include "O2_RUDA/CCDB.h"
 
+#include <bitset>
 #include <vector>
 #include <array>
 #include <set>
@@ -57,11 +58,7 @@ const int sNchannelsAC = sNchannelsA+sNchannelsC;
 
 const int sOrGate = 153; // in TDC units
 
-
-const o2::parameters::GRPLHCIFData *getGRPLHCIFData(unsigned int runnum);
-std::map<unsigned int,const o2::parameters::GRPLHCIFData *> getMapRun2GRPLHCIFData(const std::set<unsigned int> &setRunnums);
 void processDigits(unsigned int runnum, const std::vector<std::string> &vecFilepathInput,const std::string &filepathOutput,const o2::parameters::GRPLHCIFData *ptrGRPLHCIFData);
-
 void runAnalysisFull(const std::string &pathToSrc, const std::string &pathToDst="hists") {
   gSystem->Load("libboost_filesystem.so");
   gSystem->Load("$RUDA_ROOT/lib/libCommonRUDA.so");
@@ -77,12 +74,7 @@ void runAnalysisFull(const std::string &pathToSrc, const std::string &pathToDst=
 
   inputFileManager.addPathSrc(pathToSrc);
   const auto vecParams = inputFileManager.getFileChunks(nChunksPerRun,pathToDst,filenamePrefix);
-//  const auto entry = vecParams[0];
-//  const std::vector<std::string> vecFilepathInput{entry.mFilepathInputFIT[0].mFilepathInputFT0};
-//  processDigits(entry.mRunnum,vecFilepathInput,entry.mFilepathOutput,nullptr);
-//  return;
-  //
-  const auto mapRun2GRPLHCIFData = getMapRun2GRPLHCIFData(inputFileManager.mSetRunnums);
+  const auto mapRun2GRPLHCIFData = utilities::ccdb::getMapRun2GRPLHCIFData(inputFileManager.mSetRunnums);
   ROOT::TProcessExecutor pool(nParallelJobs);
   const auto result = pool.Map([&mapRun2GRPLHCIFData](const utilities::InputFileManager::Parameters &entry) {
             std::vector<std::string> vecFilepathInput{};
@@ -459,35 +451,4 @@ void processDigits(unsigned int runnum, const std::vector<std::string> &vecFilep
   //Writing data
   outputManager.storeOutput();
   std::cout<<std::endl;
-}
-
-const o2::parameters::GRPLHCIFData *getGRPLHCIFData(unsigned int runnum) {
-  std::bitset<sNBC> collBC{};
-  const std::string tsKey = "SOR";
-  o2::ccdb::CcdbApi ccdb_api;
-  ccdb_api.init(o2::base::NameConf::getCCDBServer());
-  const auto headers = ccdb_api.retrieveHeaders("RCT/Info/RunInformation", std::map<std::string, std::string>(),runnum);
-  uint64_t ts{};
-  const auto &itTimestamp = headers.find(tsKey);
-  if(itTimestamp!=headers.end()) {
-    ts = std::stoll(itTimestamp->second);
-  }
-  else {
-    return nullptr;
-  }
-  std::map<std::string, std::string> mapMetadata;
-  std::map<std::string, std::string> mapHeader;
-  const auto *ptrGRPLHCIFData = ccdb_api.retrieveFromTFileAny<o2::parameters::GRPLHCIFData>("GLO/Config/GRPLHCIF",mapMetadata,ts,&mapHeader);
-  return ptrGRPLHCIFData;
-}
-
-std::map<unsigned int,const o2::parameters::GRPLHCIFData *> getMapRun2GRPLHCIFData(const std::set<unsigned int> &setRunnums) {
-  std::map<unsigned int,const o2::parameters::GRPLHCIFData *> mapResult{};
-  for(const auto &runnum: setRunnums) {
-    const o2::parameters::GRPLHCIFData *ptrGRPLHCIFData = getGRPLHCIFData(runnum);
-    if(ptrGRPLHCIFData!=nullptr) {
-      mapResult.insert({runnum,ptrGRPLHCIFData});
-    }
-  }
-  return mapResult;
 }

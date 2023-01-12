@@ -1,7 +1,6 @@
 #include "DataFormatsFT0/Digit.h"
 #include "DataFormatsFT0/ChannelData.h"
 #include "DataFormatsFT0/LookUpTable.h"
-#include "DataFormatsParameters/GRPLHCIFData.h"
 #include "FT0Base/Geometry.h"
 
 #include <TH2F.h>
@@ -16,7 +15,9 @@
 #include "CommonRUDA/HelperHists.h"
 #include "CommonRUDA/OutputHistManager.h"
 
+#include "O2_RUDA/CCDB.h"
 
+#include <bitset>
 #include <vector>
 #include <array>
 #include <set>
@@ -57,9 +58,6 @@ const int sNchannelsAC = sNchannelsA+sNchannelsC;
 
 const int sOrGate = 153; // in TDC units
 
-
-const o2::parameters::GRPLHCIFData *getGRPLHCIFData(unsigned int runnum);
-std::map<unsigned int,const o2::parameters::GRPLHCIFData *> getMapRun2GRPLHCIFData(const std::set<unsigned int> &setRunnums);
 void processDigits(unsigned int runnum, const std::vector<std::string> &vecFilepathInput,const std::string &filepathOutput,const o2::parameters::GRPLHCIFData *ptrGRPLHCIFData);
 
 void runAnalysisFull(const std::string &pathToSrc, const std::string &pathToDst="hists") {
@@ -82,7 +80,7 @@ void runAnalysisFull(const std::string &pathToSrc, const std::string &pathToDst=
 //  processDigits(entry.mRunnum,vecFilepathInput,entry.mFilepathOutput,nullptr);
 //  return;
   //
-  const auto mapRun2GRPLHCIFData = getMapRun2GRPLHCIFData(inputFileManager.mSetRunnums);
+  const auto mapRun2GRPLHCIFData = utilities::ccdb::getMapRun2GRPLHCIFData(inputFileManager.mSetRunnums);
   ROOT::TProcessExecutor pool(nParallelJobs);
   const auto result = pool.Map([&mapRun2GRPLHCIFData](const utilities::InputFileManager::Parameters &entry) {
             std::vector<std::string> vecFilepathInput{};
@@ -233,7 +231,6 @@ void processDigits(unsigned int runnum, const std::vector<std::string> &vecFilep
   const Axis axisAmplitudeBins4(1025,0.,4100.);
   const Axis axisSumAmplBins10(1200,0.,12000.);
 
-
   //Amplitude vs Time
   auto arrLowAmpVsTime = make2DHistsPerSide("LowAmpVsTime_side%s","hLowAmpVsTime%i","Low amplitude vs time, channelID %i (collision BC, vertex, good PM bits);Amp [ADC];Time [TDC]",axisLowAmplitudes,axisTimeRange500);
 //  auto arrAmpVsTime = make2DHistsPerSide("AmpVsTime_side%s","hAmpVsTime%i","Amplitude vs time, channelID %i;Amp [ADC];Time [TDC]",axisAmplitudeLowBins,axisTimeLowBins);
@@ -249,6 +246,7 @@ void processDigits(unsigned int runnum, const std::vector<std::string> &vecFilep
   //Trigger list
   outputManager.registerCurrentList("Triggers");
 //  auto hTriggerReflection = outputManager.registerHist<TH1F>("hTriggerReflection","Triggers at reflectiobn BC;Trigger",axisTriggers);
+
   auto hTriggerBC = outputManager.registerHist<TH2F>("hTriggersBC","Triggers Vs BC;BC", axisBC, axisTriggers);
   auto hTriggerPerAfterCollBC = outputManager.registerHist<TH2F>("hTriggerPerAfterCollBC","Triggers Vs BC, after collision BC(previous event - collision, isCFDinGate PM bit);BC", axisBC, axisTriggers);
   auto hChIDperBC_OrA = outputManager.registerHist<TH2F>("hChIDperBC_OrA","ChannelID(kIsEventInTVDC PM bit) vs BC, OrA", axisBC, axisChannels);
@@ -441,35 +439,4 @@ void processDigits(unsigned int runnum, const std::vector<std::string> &vecFilep
   //Writing data
   outputManager.storeOutput();
   std::cout<<std::endl;
-}
-
-const o2::parameters::GRPLHCIFData *getGRPLHCIFData(unsigned int runnum) {
-  std::bitset<sNBC> collBC{};
-  const std::string tsKey = "SOR";
-  o2::ccdb::CcdbApi ccdb_api;
-  ccdb_api.init(o2::base::NameConf::getCCDBServer());
-  const auto headers = ccdb_api.retrieveHeaders("RCT/Info/RunInformation", std::map<std::string, std::string>(),runnum);
-  uint64_t ts{};
-  const auto &itTimestamp = headers.find(tsKey);
-  if(itTimestamp!=headers.end()) {
-    ts = std::stoll(itTimestamp->second);
-  }
-  else {
-    return nullptr;
-  }
-  std::map<std::string, std::string> mapMetadata;
-  std::map<std::string, std::string> mapHeader;
-  const auto *ptrGRPLHCIFData = ccdb_api.retrieveFromTFileAny<o2::parameters::GRPLHCIFData>("GLO/Config/GRPLHCIF",mapMetadata,ts,&mapHeader);
-  return ptrGRPLHCIFData;
-}
-
-std::map<unsigned int,const o2::parameters::GRPLHCIFData *> getMapRun2GRPLHCIFData(const std::set<unsigned int> &setRunnums) {
-  std::map<unsigned int,const o2::parameters::GRPLHCIFData *> mapResult{};
-  for(const auto &runnum: setRunnums) {
-    const o2::parameters::GRPLHCIFData *ptrGRPLHCIFData = getGRPLHCIFData(runnum);
-    if(ptrGRPLHCIFData!=nullptr) {
-      mapResult.insert({runnum,ptrGRPLHCIFData});
-    }
-  }
-  return mapResult;
 }
