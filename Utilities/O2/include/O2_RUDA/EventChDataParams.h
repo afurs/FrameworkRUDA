@@ -1,16 +1,20 @@
 #ifndef EventChDataParams_H
 #define EventChDataParams_H
 
+#include "DetectorFIT.h"
+#include "Constants.h"
+
 #include <iostream>
 namespace digits
 {
-template<std::size_t NChannelsA,std::size_t NChannelsC>
-struct EventChDataParams {
-  constexpr static std::size_t sNchannelsA = NChannelsA;
-  constexpr static std::size_t sNchannelsC = NChannelsC;
-  constexpr static std::size_t sNchannelsAC = sNchannelsA + sNchannelsC;
-  constexpr static double sNS2Cm = 29.97; // light NS to Centimetres
-  constexpr static double sNSperTimeChannel = 0.01302;
+template<typename DetectorFITtype>
+struct EventChDataParamsFIT {
+  typedef DetectorFITtype DetectorFIT_t;
+  constexpr static std::size_t sNchannelsA = DetectorFIT_t::sNchannelsA;
+  constexpr static std::size_t sNchannelsC = DetectorFIT_t::sNchannelsC;
+  constexpr static std::size_t sNchannelsAC = DetectorFIT_t::sNchannelsAC;
+  //constexpr static double sNS2Cm = constants::sNS2Cm; // light NS to Centimetres
+  //constexpr static double sNSperTimeChannel = constants::sTDC2NS;
   int mAmpSumA{};
   int mAmpSumC{};
   int mAmpSum{};
@@ -32,32 +36,53 @@ struct EventChDataParams {
   }
   template<typename AmpType, typename TimeType, typename ChIDtype>
   void fill(const AmpType &amp,const TimeType &time, const ChIDtype &chID) {
-    if(chID<sNchannelsA) {
+    const auto side = DetectorFIT_t::getSide(chID);
+    if(DetectorFIT_t::isSideA(side)) {
       mNchanA++;
       mMeanTimeA+=time;
       mAmpSumA+=amp;
     }
-    else if(chID<sNchannelsAC){
+    else if(DetectorFIT_t::isSideC(side)){
       mNchanC++;
       mMeanTimeC+=time;
       mAmpSumC+=amp;
     }
   }
   void calculate() {
-    if(mNchanA>0) {
-      mMeanTimeA = mMeanTimeA/mNchanA;
-      mIsReadyA=true;
-      if(mNchanC>0) {
-        mIsReadyAC=true;
+    if constexpr(sNchannelsA>0) {
+      if(mNchanA>0) {
+        mMeanTimeA = mMeanTimeA/mNchanA;
+        mIsReadyA=true;
+        if(mNchanC>0) {
+          mIsReadyAC=true;
+        }
       }
     }
-    if(mNchanC>0) {
-      mMeanTimeC = mMeanTimeC/mNchanC;
-      mIsReadyC=true;
+    if constexpr(sNchannelsC>0) {
+      if(mNchanC>0) {
+        mMeanTimeC = mMeanTimeC/mNchanC;
+        mIsReadyC=true;
+      }
     }
-    mCollTime = (mMeanTimeA + mMeanTimeC)/2 * sNSperTimeChannel;
-    mVrtPos = (mMeanTimeC - mMeanTimeA)/2 * sNSperTimeChannel * sNS2Cm;
+    if constexpr(sNchannelsA>0 && sNchannelsC>0) {
+      mCollTime = (mMeanTimeA + mMeanTimeC)/2;
+      mVrtPos = (mMeanTimeC - mMeanTimeA)/2;
+    }
+    else if constexpr(sNchannelsA>0) {
+      mCollTime = mMeanTimeA;
+    }
+    else if constexpr(sNchannelsC>0) {
+      mCollTime = mMeanTimeC;
+    }
+  }
+  double getCollisionTimeNS() const {
+    return mCollTime = mCollTime * constants::sTDC2NS;
   }
 };
+
+using EventChDataParamsFDD = EventChDataParamsFIT<detectorFIT::DetectorFDD>;
+using EventChDataParamsFT0 = EventChDataParamsFIT<detectorFIT::DetectorFT0>;
+using EventChDataParamsFV0 = EventChDataParamsFIT<detectorFIT::DetectorFV0>;
+
 } // namespace digits
 #endif
