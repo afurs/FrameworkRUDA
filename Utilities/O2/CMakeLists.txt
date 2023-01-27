@@ -5,6 +5,8 @@ set(MODULE O2_RUDA)
 set(HDRS
     include/${MODULE}/BCschemaUtils.h
     include/${MODULE}/CCDB.h
+    include/${MODULE}/Constants.h
+    include/${MODULE}/DetectorFIT.h
     include/${MODULE}/EventChDataParams.h
     include/${MODULE}/FunctorField.h
     include/${MODULE}/SyncDigits.h
