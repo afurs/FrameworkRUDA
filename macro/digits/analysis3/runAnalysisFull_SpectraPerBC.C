@@ -1,6 +1,7 @@
 #include "DataFormatsFT0/Digit.h"
 #include "DataFormatsFT0/ChannelData.h"
 #include "DataFormatsFT0/LookUpTable.h"
+#include "DataFormatsParameters/GRPLHCIFData.h"
 #include "FT0Base/Geometry.h"
 
 #include <TH2F.h>
@@ -16,6 +17,8 @@
 #include "CommonRUDA/OutputHistManager.h"
 
 #include "O2_RUDA/CCDB.h"
+#include "O2_RUDA/DetectorFIT.h"
+#include "O2_RUDA/EventChDataParams.h"
 
 #include <bitset>
 #include <vector>
@@ -36,12 +39,22 @@ PM bits
 https://github.com/AliceO2Group/AliceO2/blob/75c6ae331dfb78622221e1c760a9a6e8af175380/DataFormats/Detectors/FIT/FT0/include/DataFormatsFT0/ChannelData.h#L37-L44
 
 */
+//Choose detector type
+using Detector = detectorFIT::DetectorFT0;
+//Detector parameters
+using Digit = Detector::Digit_t;
+using ChannelData = Detector::ChannelData_t;
+const int sNchannelsA = Detector::sNchannelsA;
+const int sNchannelsC = Detector::sNchannelsC;
+const int sNchannelsAC = Detector::sNchannelsAC;
+const char* sDigitBranchName = Detector::sDigitBranchName;
+const char* sChannelDataBranchName = Detector::sChannelDataBranchName;
+
 using HistHelper = utilities::Hists;
 using Utils = utilities::AnalysisUtils;
 using LUT = o2::fit::LookupTableBase<>;
-using DigitFT0 = o2::ft0::Digit;
-using ChannelDataFT0 = o2::ft0::ChannelData;
 using Axis = helpers::hists::Axis;
+using EntryCCDB = utilities::ccdb::EntryCCDB;
 
 const int sNchannelsFT0 = 212;
 const float sNSperTimeChannel=o2::ft0::Geometry::ChannelWidth*1e-3; // nanoseconds per time channel, 0.01302
@@ -53,48 +66,9 @@ const int sTFrate = 88;
 const double sTFLengthSec = 1./sTFrate;
 const int sNBCperSec = sNBC*sOrbitPerTF*sTFrate;
 
-const int sNchannelsA = 96;
-const int sNchannelsC = 112;
-const int sNchannelsAC = sNchannelsA+sNchannelsC;
-
 const int sOrGate = 153; // in TDC units
-
-void processDigits(unsigned int runnum, const std::vector<std::string> &vecFilepathInput,const std::string &filepathOutput,const o2::parameters::GRPLHCIFData *ptrGRPLHCIFData);
-void runAnalysisFull(const std::string &pathToSrc, const std::string &pathToDst="hists") {
-  gSystem->Load("libboost_filesystem.so");
-  gSystem->Load("$RUDA_ROOT/lib/libCommonRUDA.so");
-  /////////////////////////////////////////////////////
-//  const std::size_t nParallelJobs=8;
-//  const std::size_t nChunksPerRun=15;
-  const std::size_t nParallelJobs=6;
-  const std::size_t nChunksPerRun=20;
-
-  const std::string filenamePrefix = "hist";
-  /////////////////////////////////////////////////////
-  utilities::InputFileManager inputFileManager;
-
-  inputFileManager.addPathSrc(pathToSrc);
-  const auto vecParams = inputFileManager.getFileChunks(nChunksPerRun,pathToDst,filenamePrefix);
-  const auto mapRun2GRPLHCIFData = utilities::ccdb::getMapRun2GRPLHCIFData(inputFileManager.mSetRunnums);
-  ROOT::TProcessExecutor pool(nParallelJobs);
-  const auto result = pool.Map([&mapRun2GRPLHCIFData](const utilities::InputFileManager::Parameters &entry) {
-            std::vector<std::string> vecFilepathInput{};
-            for(const auto &entryFilepath: entry.mFilepathInputFIT) {
-              vecFilepathInput.emplace_back(entryFilepath.mFilepathInputFT0);
-            }
-            const auto itGRPLHCIFData = utilities::ccdb::mapRun2GRPLHCIFData.find(entry.mRunnum);
-            if(itGRPLHCIFData!=mapRun2GRPLHCIFData.end()) {
-              processDigits(entry.mRunnum,vecFilepathInput,entry.mFilepathOutput,itGRPLHCIFData->second);
-            }
-            else {
-              std::cout<<"ERROR! CANNOT FIND GRPLHCIFData for run "<<entry.mRunnum<<std::endl;
-            }
-            return 0;
-          }
-          , vecParams);
-}
-
-void processDigits(unsigned int runnum, const std::vector<std::string> &vecFilepathInput, const std::string &filepathOutput,const o2::parameters::GRPLHCIFData *ptrGRPLHCIFData)
+void runAnalysisFull(const std::vector<std::string> &vecPathToSrc, const std::string &pathToDst="hists",std::size_t nParallelJobs=7,std::size_t nChunksPerRun=2, const std::set<unsigned int> &setRunnum={});
+void processDigits(unsigned int runnum, const std::vector<std::string> &vecFilepathInput, const std::string &filepathOutput,const EntryCCDB &entryCCDB)
 {
   //Load libraries and define types
   gSystem->Load("libboost_filesystem.so");
@@ -132,6 +106,7 @@ void processDigits(unsigned int runnum, const std::vector<std::string> &vecFilep
 
   //Collision schema
   std::bitset<sNBC> collBC{}, collBC_A{}, collBC_C{}, collBC_E{};
+  const o2::parameters::GRPLHCIFData *ptrGRPLHCIFData = entryCCDB.mGRPLHCIFData;
   if(ptrGRPLHCIFData!=nullptr) {
     const auto &bunchFilling = ptrGRPLHCIFData->getBunchFilling();
     collBC = bunchFilling.getBCPattern();
@@ -218,7 +193,7 @@ void processDigits(unsigned int runnum, const std::vector<std::string> &vecFilep
   const Axis axisAmplitudeLowBins(205,0.,4100.);
 
   const Axis axisTimeLowBins4Corr(1000,-2000.,2000.);
-  const Axis axisLowAmplitudes(100,0.,100.);
+  const Axis axisLowAmplitudes(200,0.,200.);
 
   const Axis axisTimeRange500(1000,-500.,500.);
   const Axis axisAmplitudeBins2(2050,0.,4100.);
@@ -230,6 +205,8 @@ void processDigits(unsigned int runnum, const std::vector<std::string> &vecFilep
 
   //Amplitudes
   auto arrAmpPerAfterCollBC = make2DHistsPerSide("Amp%s_AfterCollBC", "hAmpPerAfterCollBC_ch%i", "Amp ch%i , after collision BC(previous event - collision);BC;Amplitude [ADC]", axisBC, axisAmplitudeLowBins);
+  auto arrAmpLowPerAfterCollBC_inTrgGate = make2DHistsPerSide("AmpLow%s_AfterCollBC_inTrgGate", "hLowAmpPerAfterCollBC_ch%i", "Amp ch%i in trigger gate, after collision BC(previous event - collision);BC;Amplitude [ADC]", axisBC, axisLowAmplitudes);
+
   auto arrAmpPerInCollBC = make2DHistsPerSide("Amp%s_InCollBC", "hAmpPerInCollBC_ch%i", "Amp ch%i , in collision BC vs next BC ;Next BC;Amp in collision BC [ADC]", axisBC, axisAmplitudeLowBins);
   auto arrAmpCorr_Afterpulse = make2DHistsPerSide("Amp%s_Corr_Afterpulse", "hAmpCorrAfterpulse_ch%i", "Amp ch%i correlation afterpulse;Amp(collision BC);Amp(Afterpulse)", axisAmplitudeBins2, axisAmplitudeLowBins);
   auto arrAmpCorr_Reflection = make2DHistsPerSide("Amp%s_Corr_Reflection", "hAmpCorrReflection_ch%i", "Amp ch%i correlation reflection;Amp(collision BC);Amp(Reflection)", axisAmplitudeBins2, axisAmplitudeLowBins);
@@ -288,10 +265,10 @@ void processDigits(unsigned int runnum, const std::vector<std::string> &vecFilep
   uint16_t prevBC{};
 
   ////
-  std::vector<DigitFT0> vecDigits;
-  std::vector<DigitFT0> *ptrVecDigits = &vecDigits;
-  std::vector<ChannelDataFT0> vecChannelData;
-  std::vector<ChannelDataFT0> *ptrVecChannelData = &vecChannelData;
+  std::vector<Digit> vecDigits;
+  std::vector<Digit> *ptrVecDigits = &vecDigits;
+  std::vector<ChannelData> vecChannelData;
+  std::vector<ChannelData> *ptrVecChannelData = &vecChannelData;
   std::size_t mCntEvents{};
   std::size_t mNTFs{};
   for(const auto &filepathInput:vecFilepathInput) {
@@ -306,8 +283,8 @@ void processDigits(unsigned int runnum, const std::vector<std::string> &vecFilep
       std::cout<<"\nWARNING! CANNOT FIND TREE: "<<treeName<<std::endl;
       return;
     }
-    treeInput->SetBranchAddress("FT0DIGITSBC", &ptrVecDigits);
-    treeInput->SetBranchAddress("FT0DIGITSCH", &ptrVecChannelData);
+    treeInput->SetBranchAddress(sDigitBranchName, &ptrVecDigits);
+    treeInput->SetBranchAddress(sChannelDataBranchName, &ptrVecChannelData);
     std::size_t nTotalTFs = treeInput->GetEntries();
     std::size_t nPercents = 10;
     std::size_t stepTF = nPercents*nTotalTFs/100; //step for 10%
@@ -335,13 +312,13 @@ void processDigits(unsigned int runnum, const std::vector<std::string> &vecFilep
         const auto &bc = ir.bc;
         const auto &orbit = ir.orbit;
         const auto &trg = digit.mTriggers;
-        const auto &trgBits = digit.mTriggers.getTriggersignals();
-        const auto &nChA = digit.mTriggers.getNChanA();
-        const auto &nChC = digit.mTriggers.getNChanC();
-        const auto &sumAmpA = digit.mTriggers.getAmplA();
-        const auto &sumAmpC = digit.mTriggers.getAmplC();
-        const auto &averageTimeA = digit.mTriggers.getTimeA();
-        const auto &averageTimeC = digit.mTriggers.getTimeC();
+        const auto &trgBits = trg.getTriggersignals();
+        const auto &nChA = trg.getNChanA();
+        const auto &nChC = trg.getNChanC();
+        const auto &sumAmpA = trg.getAmplA();
+        const auto &sumAmpC = trg.getAmplC();
+        const auto &averageTimeA = trg.getTimeA();
+        const auto &averageTimeC = trg.getTimeC();
 /******************************
         **PUT HERE CODE FOR PROCESSING DIGITS
 ******************************/
@@ -367,20 +344,20 @@ void processDigits(unsigned int runnum, const std::vector<std::string> &vecFilep
             hTriggerBC->Fill(bc,static_cast<double>(i));
           }
         }
-        std::map<unsigned int, std::vector<ChannelDataFT0> > mapMCP2data{};
+        std::map<unsigned int, std::vector<ChannelData> > mapMCP2data{};
         std::bitset<sNchannelsAC/4> bsSingleMCP{};
         for(const auto &channelData: channels) {
           //Iterating over ChannelData(PM data) per given Event(Digit)
           //VARIABLEES TO USE
-          const auto &amp = channelData.QTCAmpl;
-          const auto &time = channelData.CFDTime;
-          const auto &chID = channelData.ChId;
-          const auto &pmBits = channelData.ChainQTC;
+          const auto &amp = Detector::amp(channelData);
+          const auto &time = Detector::time(channelData);
+          const auto &chID = Detector::channelID(channelData);
+          const auto &pmBits = Detector::pmBits(channelData);
           if(chID>=sNchannelsAC) continue;
           const double timePs = time * 13.02;
           const unsigned int mcpID = chID/4;
           const bool isPMbitsGood = ((pmBits & pmBitsToCheck) == pmBitsGood);
-          const bool isChannelUsedInTrg = pmBits & (1<<ChannelDataFT0::kIsEventInTVDC);
+          const bool isChannelUsedInTrg = pmBits & (1<<o2::ft0::ChannelData::kIsEventInTVDC);
           arrMapChID2BC_FT0[chID].set(bc);
           /*
           if(pmBits & (1<<ChannelDataFT0::kNumberADC)) {
@@ -433,6 +410,9 @@ void processDigits(unsigned int runnum, const std::vector<std::string> &vecFilep
               arrTimePerInCollBC[chID]->Fill(bc,arrTime[chID]);
               arrAmpPerAfterCollBC[chID]->Fill(bc,amp);
               arrAmpPerInCollBC[chID]->Fill(bc,arrAmp[chID]);
+              if(isChannelUsedInTrg) {
+                arrAmpLowPerAfterCollBC_inTrgGate[chID]->Fill(bc,amp);
+              }
               const uint16_t bcShift = (bc<bcSingle) ? (bc-arrChID_lastBC[chID]) : 0xffff;
               if(bcShift==arrAfterpulseShiftBC[chID]) {
                 //Afterpulse
@@ -488,4 +468,48 @@ void processDigits(unsigned int runnum, const std::vector<std::string> &vecFilep
   //Writing data
   outputManager.storeOutput();
   std::cout<<std::endl;
+}
+void runAnalysisFull(const std::vector<std::string> &vecPathToSrc, const std::string &pathToDst,std::size_t nParallelJobs,std::size_t nChunksPerRun,const std::set<unsigned int> &setRunnum) {
+  gSystem->Load("libboost_filesystem.so");
+  gSystem->Load("$RUDA_ROOT/lib/libCommonRUDA.so");
+  /////////////////////////////////////////////////////
+  const std::string filenamePrefix = "hist";
+  /////////////////////////////////////////////////////
+  utilities::InputFileManager inputFileManager;
+  for(const auto & pathToSrc:vecPathToSrc) {
+    inputFileManager.addPathSrc(pathToSrc);
+  }
+  const auto vecParams = inputFileManager.getFileChunks(nChunksPerRun,pathToDst,filenamePrefix);
+
+  const auto &setRunnumsToProcces = setRunnum.size()>0 ? setRunnum : inputFileManager.mSetRunnums;
+  const auto mapRun2EntryCCDB = utilities::ccdb::EntryCCDB::getMapRun2EntryCCDB(setRunnumsToProcces);
+  ROOT::TProcessExecutor pool(nParallelJobs);
+  const auto result = pool.Map([&mapRun2EntryCCDB,&setRunnumsToProcces](const utilities::InputFileManager::Parameters &entry) {
+            if(setRunnumsToProcces.size()>0) {
+              if(setRunnumsToProcces.find(entry.mRunnum)==setRunnumsToProcces.end()) {
+                return 0;
+              }
+            }
+            std::vector<std::string> vecFilepathInput{};
+            for(const auto &entryFilepath: entry.mFilepathInputFIT) {
+              if(Detector::sDetFIT_ID==detectorFIT::EDetectorFIT::kFT0) {
+                vecFilepathInput.emplace_back(entryFilepath.mFilepathInputFT0);
+              }
+              else if(Detector::sDetFIT_ID==detectorFIT::EDetectorFIT::kFV0) {
+                vecFilepathInput.emplace_back(entryFilepath.mFilepathInputFV0);
+              }
+              else if(Detector::sDetFIT_ID==detectorFIT::EDetectorFIT::kFDD) {
+                vecFilepathInput.emplace_back(entryFilepath.mFilepathInputFDD);
+              }
+            }
+            const auto itEntryCCDB = mapRun2EntryCCDB.find(entry.mRunnum);
+            if(itEntryCCDB != mapRun2EntryCCDB.end()) {
+              processDigits(entry.mRunnum,vecFilepathInput,entry.mFilepathOutput,itEntryCCDB->second);
+            }
+            else {
+              std::cout<<"ERROR! CANNOT FIND GRPLHCIFData for run "<<entry.mRunnum<<std::endl;
+            }
+            return 0;
+          }
+          , vecParams);
 }

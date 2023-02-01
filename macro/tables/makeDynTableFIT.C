@@ -14,7 +14,7 @@
 #include "CommonRUDA/AnalysisUtils.h"
 #include "CommonRUDA/DynamicTable.h"
 
-#include "FunctorField.h"
+#include "O2_RUDA/FunctorField.h"
 
 using HistHelper = utilities::Hists;
 using Utils = utilities::AnalysisUtils;
