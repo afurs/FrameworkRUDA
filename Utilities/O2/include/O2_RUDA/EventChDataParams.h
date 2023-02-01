@@ -15,15 +15,18 @@ struct EventChDataParamsFIT {
   constexpr static std::size_t sNchannelsAC = DetectorFIT_t::sNchannelsAC;
   //constexpr static double sNS2Cm = constants::sNS2Cm; // light NS to Centimetres
   //constexpr static double sNSperTimeChannel = constants::sTDC2NS;
-  int mAmpSumA{};
-  int mAmpSumC{};
-  int mAmpSum{};
-  float mMeanTimeA{};
-  float mMeanTimeC{};
-  int mNchanA{};
-  int mNchanC{};
-  double mCollTime{};
-  double mVrtPos{};
+  constexpr static int sDummyValue = -5000;
+  int mAmpSumA{0};
+  int mAmpSumC{0};
+  int mAmpSum{0};
+  float mMeanTimeA{0};
+  float mMeanTimeC{0};
+  int mNchanA{0};
+  int mNchanC{0};
+  double mCollTime{sDummyValue};
+  double mVrtPos{sDummyValue};
+
+
   bool mIsReadyAC{false};
   bool mIsReadyA{false};
   bool mIsReadyC{false};
@@ -57,27 +60,38 @@ struct EventChDataParamsFIT {
           mIsReadyAC=true;
         }
       }
+      else {
+         mMeanTimeA = sDummyValue;
+         mAmpSumA = sDummyValue;
+      }
     }
     if constexpr(sNchannelsC>0) {
       if(mNchanC>0) {
         mMeanTimeC = mMeanTimeC/mNchanC;
         mIsReadyC=true;
       }
+      else {
+         mMeanTimeC = sDummyValue;
+         mAmpSumC = sDummyValuel;
+      }
     }
     if constexpr(sNchannelsA>0 && sNchannelsC>0) {
-      mCollTime = (mMeanTimeA + mMeanTimeC)/2;
-      mVrtPos = (mMeanTimeC - mMeanTimeA)/2;
+     if(mNchanA>0 && mNchanC>0) {
+        mCollTime = (mMeanTimeA + mMeanTimeC)/2 * constants::sTDC2NS;
+        mVrtPos = (mMeanTimeC - mMeanTimeA)/2 * constants::sTDC2Cm;
+      }
     }
     else if constexpr(sNchannelsA>0) {
-      mCollTime = mMeanTimeA;
+      mCollTime = mMeanTimeA * constants::sTDC2NS;
     }
     else if constexpr(sNchannelsC>0) {
-      mCollTime = mMeanTimeC;
+      mCollTime = mMeanTimeC * constants::sTDC2NS;
     }
   }
-  double getCollisionTimeNS() const {
-    return mCollTime = mCollTime * constants::sTDC2NS;
+/*  double getCollisionTimeNS() const {
+    return mCollTime * constants::sTDC2NS;
   }
+*/
 };
 
 using EventChDataParamsFDD = EventChDataParamsFIT<detectorFIT::DetectorFDD>;
