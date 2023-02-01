@@ -72,7 +72,7 @@ struct EventChDataParamsFIT {
       }
       else {
          mMeanTimeC = sDummyValue;
-         mAmpSumC = sDummyValuel;
+         mAmpSumC = sDummyValue;
       }
     }
     if constexpr(sNchannelsA>0 && sNchannelsC>0) {
