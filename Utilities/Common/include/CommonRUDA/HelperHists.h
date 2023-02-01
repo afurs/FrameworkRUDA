@@ -91,8 +91,11 @@ namespace hists
     };
   };
   struct Axis {
-    Axis(int nBins,double lowBin, double upBin, std::string title="", const std::map<unsigned int,std::string> &binLabels={}) :
+    Axis(int nBins,double lowBin, double upBin, const std::string &title="", const std::map<unsigned int,std::string> &binLabels={}) :
     mNBins(nBins),mLowBin(lowBin),mUpBin(upBin), mTitle(title), mBinLabels(binLabels) {}
+    Axis(const std::string &title="",const std::map<unsigned int,std::string> &binLabels={}) :
+    mNBins(binLabels.size()),mLowBin(0),mUpBin(binLabels.size()), mTitle(title), mBinLabels(binLabels) {}
+
     ~Axis() = default;
     int mNBins;
     double mLowBin;
