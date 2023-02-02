@@ -47,6 +47,7 @@ class Hists {
   template<typename Value_t=double,typename Hist_t>
   static auto makeMapFromHist(const Hist_t &hist);
   */
+/*
   template<typename HistOutput_t
            ,typename HistInput_t
            ,typename = typename std::enable_if<helpers::hists::HistHelper<HistInput_t>::Ndims
@@ -77,6 +78,67 @@ class Hists {
     }
     return listOutput;
   }
+*/
+template<typename HistOutput_t
+           ,typename HistInput_t
+           ,typename = typename std::enable_if<helpers::hists::HistHelper<HistInput_t>::Ndims
+                                               ==helpers::hists::HistHelper<HistOutput_t>::Ndims+1
+                                               && ((helpers::hists::HistHelper<HistOutput_t>::Ndims)>0) >::type>
+  static TList* decomposeHist(HistInput_t *hist,bool setErrorBin=false,int axis = 0, bool useBinName=false) {
+    if(hist==nullptr) return nullptr;
+    std::string nameSrcHist = hist->GetName();
+    std::string titleSrcHist = hist->GetTitle();
+    unsigned int nBinsX = hist->GetXaxis()->GetNbins();
+    double minX = hist->GetXaxis()->GetXmin();
+    double maxX = hist->GetXaxis()->GetXmax();
+    unsigned int nBinsY = hist->GetYaxis()->GetNbins();
+    double minY = hist->GetYaxis()->GetXmin();
+    double maxY = hist->GetYaxis()->GetXmax();
+    TAxis *axisPtr = hist->GetXaxis();
+    if(axis==1) {
+      std::swap(nBinsX,nBinsY);
+      std::swap(minX,minY);
+      std::swap(maxX,maxY);
+      axisPtr = hist->GetYaxis();
+    }
+    else if(axis!=0) {
+      std::cout<<"\n Warning! Incorrect axis value\n";
+      return nullptr;
+    }
+    TList *listOutput = new TList();
+    for(int iBinX=1;iBinX<nBinsX+1;iBinX++) {
+      std::string nameSuffix = Form("_b%i",iBinX);
+      std::string titleSuffix = Form(", bin%i",iBinX);
+      std::string labelName = axisPtr->GetBinLabel(iBinX);
+      if(useBinName && labelName.size()>0) {
+        nameSuffix = "_" + labelName;
+        titleSuffix = ", " + labelName;
+      }
+      std::string nameDestHist = nameSrcHist + nameSuffix;
+      std::string titleDestHist = titleSrcHist + titleSuffix;
+      HistOutput_t *histOutput = new HistOutput_t(nameDestHist.c_str(),titleDestHist.c_str(),nBinsY,minY,maxY);
+      listOutput->Add(histOutput);
+      double entries{0};
+      for(int iBinY=1;iBinY<nBinsY+1;iBinY++) {
+        double content{0};
+        double error{0};
+        if(axis==0) {
+          content = hist->GetBinContent(iBinX,iBinY);
+          error = hist->GetBinError(iBinX,iBinY);
+        }
+        else {
+          content = hist->GetBinContent(iBinY,iBinX);
+          error = hist->GetBinError(iBinY,iBinX);
+        }
+        histOutput->SetBinContent(iBinY,content);
+        if(setErrorBin) histOutput->SetBinError(iBinY,error);
+        entries+=content;
+      }
+      histOutput->SetEntries(entries);
+    }
+    return listOutput;
+  }
+
   /*******************************************************************************************************************/
   template<typename Hist_t>
   static TList* makeDividedHists(TList &listInput
