@@ -152,27 +152,33 @@ struct ManagerSyncFIT {
   std::string mFilepathFV0{""};
 
   std::string mTreeName{"o2sim"};
+    std::vector<DigitFDD> *ptrVecDigitsFDD = nullptr;
+    std::vector<ChannelDataFDD> *ptrVecChannelDataFDD = nullptr;
+    std::vector<DigitFT0> *ptrVecDigitsFT0 = nullptr;
+    std::vector<ChannelDataFT0> *ptrVecChannelDataFT0 = nullptr;
+    std::vector<DigitFV0> *ptrVecDigitsFV0 = nullptr;
+    std::vector<ChannelDataFV0> *ptrVecChannelDataFV0 = nullptr;
 
   void setVars(std::vector<DigitFDD> &vecDigitsFDD, std::vector<ChannelDataFDD> &vecChannelDataFDD,
                  std::vector<DigitFT0> &vecDigitsFT0, std::vector<ChannelDataFT0> &vecChannelDataFT0,
                  std::vector<DigitFV0> &vecDigitsFV0, std::vector<ChannelDataFV0> &vecChannelDataFV0) {
     //FDD
-    std::vector<DigitFDD> *ptrVecDigitsFDD = &vecDigitsFDD;
-    std::vector<ChannelDataFDD> *ptrVecChannelDataFDD = &vecChannelDataFDD;
+    ptrVecDigitsFDD = &vecDigitsFDD;
+    ptrVecChannelDataFDD = &vecChannelDataFDD;
     if(mTreeInputFDD != nullptr) {
       mTreeInputFDD->SetBranchAddress(detectorFIT::DetectorFDD::sDigitBranchName, &ptrVecDigitsFDD);
       mTreeInputFDD->SetBranchAddress(detectorFIT::DetectorFDD::sChannelDataBranchName, &ptrVecChannelDataFDD);
     }
     //FT0
-    std::vector<DigitFT0> *ptrVecDigitsFT0 = &vecDigitsFT0;
-    std::vector<ChannelDataFT0> *ptrVecChannelDataFT0 = &vecChannelDataFT0;
+    ptrVecDigitsFT0 = &vecDigitsFT0;
+    ptrVecChannelDataFT0 = &vecChannelDataFT0;
     if(mTreeInputFT0 != nullptr) {
       mTreeInputFT0->SetBranchAddress(detectorFIT::DetectorFT0::sDigitBranchName, &ptrVecDigitsFT0);
       mTreeInputFT0->SetBranchAddress(detectorFIT::DetectorFT0::sChannelDataBranchName, &ptrVecChannelDataFT0);
     }
     //FV0
-    std::vector<DigitFV0> *ptrVecDigitsFV0 = &vecDigitsFV0;
-    std::vector<ChannelDataFV0> *ptrVecChannelDataFV0 = &vecChannelDataFV0;
+    ptrVecDigitsFV0 = &vecDigitsFV0;
+    ptrVecChannelDataFV0 = &vecChannelDataFV0;
     if(mTreeInputFV0 != nullptr) {
       mTreeInputFV0->SetBranchAddress(detectorFIT::DetectorFV0::sDigitBranchName, &ptrVecDigitsFV0);
       mTreeInputFV0->SetBranchAddress(detectorFIT::DetectorFV0::sChannelDataBranchName, &ptrVecChannelDataFV0);
