@@ -35,7 +35,7 @@ struct EntryCCDB {
   uint64_t mEOR{};
   uint32_t mFirstOrbit{};
   uint32_t mLastOrbit{};
-  const o2::parameters::GRPLHCIFData *mGRPLHCIFData{nullptr};
+  o2::parameters::GRPLHCIFData mGRPLHCIFData{};
   //
 
   bool initStartEndOfRun() {
@@ -58,11 +58,13 @@ struct EntryCCDB {
     }
   }
   bool initGRPLHCIFData() {
-    mGRPLHCIFData = getGRPLHCIFData(mRunnum);
-    if(mGRPLHCIFData == nullptr) {
+      const auto ptrGRPLHCIFData = getGRPLHCIFData(mRunnum);
+
+    if(ptrGRPLHCIFData == nullptr) {
       return false;
     }
     else {
+      mGRPLHCIFData = *ptrGRPLHCIFData;
       return true;
     }
   }
@@ -107,12 +109,12 @@ struct EntryCCDB {
     const auto *ptrGRPLHCIFData = ccdbManager.getForTimeStamp<o2::parameters::GRPLHCIFData>(sPathCCDB_GRPLHCIF,tsSOR);
     return ptrGRPLHCIFData;
   }
-  static std::map<unsigned int,const o2::parameters::GRPLHCIFData *> getMapRun2GRPLHCIFData(const std::set<unsigned int> &setRunnums) {
-    std::map<unsigned int,const o2::parameters::GRPLHCIFData *> mapResult{};
+  static std::map<unsigned int,o2::parameters::GRPLHCIFData> getMapRun2GRPLHCIFData(const std::set<unsigned int> &setRunnums) {
+    std::map<unsigned int,o2::parameters::GRPLHCIFData> mapResult{};
     for(const auto &runnum: setRunnums) {
       const o2::parameters::GRPLHCIFData *ptrGRPLHCIFData = getGRPLHCIFData(runnum);
       if(ptrGRPLHCIFData!=nullptr) {
-        mapResult.insert({runnum,ptrGRPLHCIFData});
+        mapResult.insert({runnum,*ptrGRPLHCIFData});
       }
     }
     return mapResult;
