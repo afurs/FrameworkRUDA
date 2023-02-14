@@ -22,16 +22,18 @@ class AnalysisUtils {
   static std::string getFilename(std::string filepath);
   template<typename ObjectType
            ,typename = typename std::enable_if<std::is_base_of<TObject,ObjectType>::value>::type>
-  static void getObjectRecursively(TList *listObjects,TList *coll) {
+  static void getObjectRecursively(TList *listObjects,const TList *coll) {
     if(listObjects==nullptr||coll==nullptr) return;
     for(const auto &entry:(*coll))  {
       TObject *obj = (TObject *)entry;
+/*
       if(dynamic_cast<TKey *>(obj)!=nullptr)  {
        obj=(TObject *) dynamic_cast<TKey *>(obj)->ReadObj();
       }
       if(dynamic_cast<TDirectoryFile *>(obj)!=nullptr) {
         obj = dynamic_cast<TObject *> (dynamic_cast<TDirectoryFile *>(obj)->GetListOfKeys());
       }
+*/
       if(dynamic_cast<ObjectType *>(obj)!=nullptr) {
         listObjects->Add(obj);
       }
@@ -41,11 +43,46 @@ class AnalysisUtils {
     }
   }
   template<typename ObjectType>
-  static TList* getListObjFromFile(const TFile &inputFile)  {
+  static TList* getListObjFromFile(TFile &inputFile)  {
+/*
     TList *listResult = new TList();
     getObjectRecursively<ObjectType>(listResult,dynamic_cast<TList *>(inputFile.GetListOfKeys()));
     return listResult;
+*/
+    TList *listDirFile = getListObjFromDirFile(inputFile);
+    TList *listResult = new TList();
+    getObjectRecursively<ObjectType>(listResult,listDirFile);
+    delete listDirFile;
+    return listResult;
   }
+
+  static void fillListObjFromDirFile(TDirectoryFile *dirFile, TList *listObjects)  {
+    TList *listOfKeys = dirFile->GetListOfKeys();
+    for(auto entry : (*listOfKeys)) {
+      TDirectoryFile *entryDirFile = dynamic_cast<TDirectoryFile *>(entry);
+      TKey *entryKey = dynamic_cast<TKey *>(entry);
+      if(entryDirFile != nullptr) {
+        fillListObjFromDirFile(entryDirFile,listObjects);
+      }
+      else if(entryKey != nullptr) {
+        TObject *obj = dirFile->Get(entry->GetName());
+        TDirectoryFile *objDirFile = dynamic_cast<TDirectoryFile *>(obj);
+        if(objDirFile != nullptr) {
+          fillListObjFromDirFile(objDirFile,listObjects);
+        }
+        else {
+          listObjects->Add(obj);
+        }
+      }
+    }
+  }
+
+  static TList * getListObjFromDirFile(TFile &inputFile)  {
+    TList *listResult = new TList();
+    fillListObjFromDirFile(dynamic_cast<TDirectoryFile *>(&inputFile),listResult);
+    return listResult;
+  }
+
   static void makePics(TList &listObjects,std::string path
                        ,std::function<void(TObject*)> changeHistState=[](TObject *obj){},Option_t *option = "");
   static std::map<std::string,std::string> makeMapNameTitle(std::string name,std::string title,unsigned int nEntries);
