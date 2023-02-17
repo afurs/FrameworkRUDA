@@ -4,10 +4,10 @@
 #include <functional>
 #include <set>
 #include <string>
+#include <tuple>
 
 #include <TH1F.h>
 #include <TH2F.h>
-#include <TTree.h>
 #include <TFile.h>
 #include <TSystem.h>
 
@@ -17,7 +17,7 @@
 
 using HistHelper = utilities::Hists;
 using Utils = utilities::AnalysisUtils;
-void decomposeHists(const std::string &filepathToSrc,const std::string &filepathOutput,const std::set<std::string> &setHistNames, int axis=0,bool useBinNameAsSuffix=false) {
+void divideHists(const std::string &filepathToSrc,const std::string &filepathOutput,const std::vector<std::tuple<std::string,std::string,std::string>> &vecHistNames) {
   //Load libraries
   gSystem->Load("libboost_filesystem.so");
   gSystem->Load("$RUDA_ROOT/lib/libCommonRUDA.so");
@@ -33,31 +33,26 @@ void decomposeHists(const std::string &filepathToSrc,const std::string &filepath
     std::cout<<"\nWARNING! CANNOT OPEN FILE: "<<filepathToSrc<<std::endl;
     return;
   }
-
-  TList *listInput2D=new TList();
-  listInput2D->SetOwner(false);
-
+//  TList *listInput1D = Utils::getListObjFromFile<TH1F>(fileInput);
+//  TList *listInput2D = Utils::getListObjFromFile<TH2F>(fileInput);
+  TList *listInput1D = new TList();
   TList *listInput = dynamic_cast<TList *>(fileInput.Get("output"));
+  Utils::getObjectRecursively<TH1F>(listInput1D,listInput);
   listInput->SetOwner(true);
-  Utils::getObjectRecursively<TH2F>(listInput2D,listInput);
-  for(const auto &histName: setHistNames) {
-    TH2F *hist = (TH2F *) listInput2D->FindObject(histName.c_str());
-    std::cout<<"\nDecomposing hist: "<<histName<<std::endl;
-    if(hist==nullptr) {
-      std::cout<<"\nHist "<<histName<<" doesn't exist\n";
-      continue;
-    }
-    TList *listDecomposed = HistHelper::decomposeHist<TH1F>(hist,false,axis,useBinNameAsSuffix);
-    listDecomposed->SetOwner(true);
-    listDecomposed->SetName(std::string{"listDecomposed_"+histName}.c_str());
-    listDecomposed->Print();
-    listOutput->Add(listDecomposed);
-  }
-  delete listInput2D;
-  delete listInput;
-  fileInput.Close();
+//  listInput1D->SetOwner(true);
+
+  TList *listRatio = HistHelper::makeDividedHists<TH1F>(*listInput1D,vecHistNames,"b",false);
+  listRatio->SetOwner(false);
+  listRatio->SetName("ratio");
+  listOutput->AddAll(listRatio);
 
   listOutput->Print();
+
+  delete listInput1D;
+  delete listInput;
+  delete listRatio;
+  fileInput.Close();
+
   const auto isDataWritten = utilities::AnalysisUtils::writeObjToFile(listOutput,filepathOutput);
   delete listOutput;
   std::cout<<std::endl;
