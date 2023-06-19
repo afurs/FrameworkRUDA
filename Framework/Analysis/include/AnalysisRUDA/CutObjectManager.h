@@ -6,6 +6,8 @@
 #include <iterator>
 #include <regex>
 #include <iostream>
+#include <memory>
+#include <utility>
 //Cut object
 template<typename DataType,typename PredicateType>
 struct CutBitBase {
@@ -72,7 +74,7 @@ struct EventCutID:public std::bitset<NBITS_MAX> {
   template<typename ValueType>
   using EventCutIDmap = std::map<EventCutID<sNbitsMax>,ValueType,typename EventCutID<sNbitsMax>::Comparer>;
   template<typename ValueType>
-  using EventCutIDmultimap = std::multimap<EventCutID<sNbitsMax>,ValueType,typename EventCutID<sNbitsMax>::Comparer>;
+  using EventCutIDmultimap = std::multimap<EventCutID<sNbitsMax>,ValueType,typename EventCutID<sNbitsMax>::Comparer,std::allocator<std::pair<const EventCutID<sNbitsMax>,ValueType>> >;
 };
 
 //Cut object manager

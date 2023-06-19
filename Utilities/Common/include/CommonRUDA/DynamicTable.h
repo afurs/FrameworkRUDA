@@ -21,6 +21,7 @@ namespace common
     constexpr static std::size_t sNfields = sizeof...(Functors);
 
     DynamicTable(Functors... functors): mTupleFunctors(std::make_tuple(functors ...)),mTupleFunctorsWrapper(std::make_tuple(functors ...)),mCurrentTupleArgs({}) {}
+    DynamicTable(const std::string &filepath,Functors... functors):mFilepathTable(filepath),  mTupleFunctors(std::make_tuple(functors ...)),mTupleFunctorsWrapper(std::make_tuple(functors ...)),mCurrentTupleArgs({}) {}
 
     void fillTable(const typename TupleFunctorsWrapper_t::TupleArgsFunc_t &argsForEntry,bool fillTextTable=true) {
       mTable.push_back(mTupleFunctorsWrapper.eval(argsForEntry));
@@ -81,10 +82,15 @@ namespace common
       }
       outputFile.close();
     }
+    void toCSV (bool useHeader = false) {
+      toCSV(mFilepathTable,useHeader);
+    }
+
     template<size_t N, typename ...Args>
     void setCurrentArg(const Args&... args) {
       std::get<N>(mCurrentTupleArgs) = std::make_tuple(args...);
     }
+    void setFilepath(const std::string &filepath) {mFilepathTable=filepath;}
     TupleFunctorsWrapper_t mTupleFunctorsWrapper;
     TupleFunctors_t mTupleFunctors;
     typename TupleFunctorsWrapper_t::TupleArgsFunc_t mCurrentTupleArgs;
@@ -93,6 +99,7 @@ namespace common
     //std::array<std::string,sNfields> mArrFieldNames;
     std::vector<std::string> mArrFieldNames;
     std::string mDelimeter{";"};
+    std::string mFilepathTable{"table.csv"};
   };
 
 
