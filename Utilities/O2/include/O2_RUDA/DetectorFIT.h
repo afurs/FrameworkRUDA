@@ -87,7 +87,7 @@ class DetectorFIT:BaseDetectorFIT<DetID,0,0,0,void,void,true> {
 };
 
 template<>
-struct DetectorFIT<EDetectorFIT::kFDD>: public BaseDetectorFIT<EDetectorFIT::kFDD,16,16,3,DigitFDD,ChannelDataFDD,false> {
+struct DetectorFIT<EDetectorFIT::kFDD>: public BaseDetectorFIT<EDetectorFIT::kFDD,8,8,3,DigitFDD,ChannelDataFDD,false> {
   static constexpr const char* sDigitBranchName="FDDDigit";
   static constexpr const char* sChannelDataBranchName="FDDDigitCh";
 

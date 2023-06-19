@@ -10,6 +10,7 @@ set(HDRS
     include/${MODULE}/EventChDataParams.h
     include/${MODULE}/FunctorField.h
     include/${MODULE}/SyncDigits.h
+    include/${MODULE}/Triggers.h
     include/${MODULE}/TimestampInfo.h
     )
 add_library(${MODULE} INTERFACE)

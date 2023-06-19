@@ -10,6 +10,7 @@
 #include <bitset>
 #include <map>
 #include <set>
+#include <iostream>
 
 namespace utilities {
 namespace ccdb {
@@ -31,8 +32,8 @@ struct EntryCCDB {
   static constexpr const char* sPathCCDB_GRPLHCIF = "GLO/Config/GRPLHCIF";
   //Fields from CCDB
   unsigned int mRunnum{};
-  uint64_t mSOR{};
-  uint64_t mEOR{};
+  long mSOR{-1};
+  long mEOR{};
   uint32_t mFirstOrbit{};
   uint32_t mLastOrbit{};
   o2::parameters::GRPLHCIFData mGRPLHCIFData{};
@@ -40,7 +41,7 @@ struct EntryCCDB {
 
   bool initStartEndOfRun() {
     getRunTimeMeta(mRunnum,mSOR,mEOR);
-    if(mSOR==0 || mEOR==0) {
+    if(mSOR==-1 || mEOR==0) {
       return false;
     }
     else {
@@ -58,27 +59,28 @@ struct EntryCCDB {
     }
   }
   bool initGRPLHCIFData() {
-      const auto ptrGRPLHCIFData = getGRPLHCIFData(mRunnum);
-
+    const auto ptrGRPLHCIFData = getGRPLHCIFData(mRunnum,mSOR);
     if(ptrGRPLHCIFData == nullptr) {
+      std::cout<<"\nError! There are no GRPLHCIFData object for run #"<<mRunnum<<std::endl;
       return false;
     }
     else {
       mGRPLHCIFData = *ptrGRPLHCIFData;
       return true;
     }
+    
   }
 
   //Static methods
-  static void getRunTimeMeta(unsigned int runnum, uint64_t &sor, uint64_t &eor) {
+  static void getRunTimeMeta(unsigned int runnum, long &sor, long &eor) {
     auto& ccdbManager = o2::ccdb::BasicCCDBManager::instance();
     const auto &startEndTime = ccdbManager.getRunDuration(runnum);
     sor = startEndTime.first;
     eor = startEndTime.second;
   }
   static void getFirstLastOrbit(unsigned int runnum,uint32_t &firstOrbit, uint32_t &lastOrbit) {
-    uint64_t tsSOR{};
-    uint64_t tsEOR{};
+    long tsSOR{};
+    long tsEOR{};
     getRunTimeMeta(runnum, tsSOR,tsEOR);
 
     auto& ccdbManager = o2::ccdb::BasicCCDBManager::instance();
@@ -98,12 +100,13 @@ struct EntryCCDB {
       lastOrbit = 0;
     }
   }
-  static const o2::parameters::GRPLHCIFData *getGRPLHCIFData(unsigned int runnum) {
-    uint64_t tsSOR{};
-    uint64_t tsEOR{};
-    getRunTimeMeta(runnum, tsSOR,tsEOR);
-    if(tsSOR == 0) {
-      return nullptr;
+  static const o2::parameters::GRPLHCIFData *getGRPLHCIFData(unsigned int runnum, long tsSOR) {
+    //getRunTimeMeta(runnum, tsSOR,tsEOR);
+    //if(tsSOR == 0) {
+      //return nullptr;
+    //}
+    if(tsSOR==-1) {
+      std::cout<<"\n WARNING! Fetching GRPLHCIFData with current timestamp!\n";
     }
     auto& ccdbManager = o2::ccdb::BasicCCDBManager::instance();
     const auto *ptrGRPLHCIFData = ccdbManager.getForTimeStamp<o2::parameters::GRPLHCIFData>(sPathCCDB_GRPLHCIF,tsSOR);
@@ -112,7 +115,10 @@ struct EntryCCDB {
   static std::map<unsigned int,o2::parameters::GRPLHCIFData> getMapRun2GRPLHCIFData(const std::set<unsigned int> &setRunnums) {
     std::map<unsigned int,o2::parameters::GRPLHCIFData> mapResult{};
     for(const auto &runnum: setRunnums) {
-      const o2::parameters::GRPLHCIFData *ptrGRPLHCIFData = getGRPLHCIFData(runnum);
+      long sor{-1};
+      long eor{};
+      getRunTimeMeta(runnum,sor,eor);
+      const o2::parameters::GRPLHCIFData *ptrGRPLHCIFData = getGRPLHCIFData(runnum,sor);
       if(ptrGRPLHCIFData!=nullptr) {
         mapResult.insert({runnum,*ptrGRPLHCIFData});
       }

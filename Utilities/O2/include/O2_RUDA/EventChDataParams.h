@@ -19,6 +19,9 @@ struct EventChDataParamsFIT {
   int mAmpSumA{0};
   int mAmpSumC{0};
   int mAmpSum{0};
+  int mSumTimeA{0};
+  int mSumTimeC{0};
+
   float mMeanTimeA{0};
   float mMeanTimeC{0};
   int mNchanA{0};
@@ -26,10 +29,16 @@ struct EventChDataParamsFIT {
   double mCollTime{sDummyValue};
   double mVrtPos{sDummyValue};
 
-
   bool mIsReadyAC{false};
   bool mIsReadyA{false};
   bool mIsReadyC{false};
+
+  // Special -80cm vertex spot for investigation, keep it configurable
+  double mVrtPosSpotMin{-85.};
+  double mVrtPosSpotMax{-75.};
+  uint8_t mTriggerWord{};
+  bool isInVrtSpot() const {return mVrtPos>mVrtPosSpotMin && mVrtPos<mVrtPosSpotMax;}
+
   void print() const {
     std::cout<<std::endl
     <<"|"<<mMeanTimeA<<"|"<<mMeanTimeC
@@ -42,19 +51,19 @@ struct EventChDataParamsFIT {
     const auto side = DetectorFIT_t::getSide(chID);
     if(DetectorFIT_t::isSideA(side)) {
       mNchanA++;
-      mMeanTimeA+=time;
+      mSumTimeA+=time;
       mAmpSumA+=amp;
     }
     else if(DetectorFIT_t::isSideC(side)){
       mNchanC++;
-      mMeanTimeC+=time;
+      mSumTimeC+=time;
       mAmpSumC+=amp;
     }
   }
   void calculate() {
     if constexpr(sNchannelsA>0) {
       if(mNchanA>0) {
-        mMeanTimeA = mMeanTimeA/mNchanA;
+        mMeanTimeA = static_cast<float>(mSumTimeA)/mNchanA;
         mIsReadyA=true;
         if(mNchanC>0) {
           mIsReadyAC=true;
@@ -67,7 +76,7 @@ struct EventChDataParamsFIT {
     }
     if constexpr(sNchannelsC>0) {
       if(mNchanC>0) {
-        mMeanTimeC = mMeanTimeC/mNchanC;
+        mMeanTimeC = static_cast<float>(mSumTimeC)/mNchanC;
         mIsReadyC=true;
       }
       else {
