@@ -59,25 +59,28 @@ namespace common {
       return eval(mTupleFunctors, tupleArgsFuncs);
     }
     template<typename ArgType>
-    static std::string argAsString(const ArgType &arg, const std::string &delimeter=";") {
+    static std::string toString(const ArgType &arg) {
       if constexpr(std::is_same<ArgType,std::string>::value) {
         return arg;
       }
-      else if constexpr(helpers::common::IsSpecOf<std::vector, ArgType>::value) {
-        if(arg.size()==1) {
-          return std::to_string(arg[0]);
-        }
-        else if(arg.size()>1) {
-          std::string str = std::to_string(arg[0]);
+      else {
+        return std::to_string(arg);
+      }
+    }
+    template<typename ArgType>
+    static std::string argAsString(const ArgType &arg, const std::string &delimeter=";") {
+      if constexpr(helpers::common::IsSpecOf<std::vector, ArgType>::value) {
+        if(arg.size()>0) {
+          std::string str = toString(arg[0]);
           for(int i=1;i<arg.size();i++) {
             str+=delimeter;
-            str+=std::to_string(arg[i]);
+            str+=toString(arg[i]);
           }
           return str;
         }
       }
       else {
-        return std::to_string(arg);
+        return toString(arg);
       }
       return std::string{"nan"};
     }

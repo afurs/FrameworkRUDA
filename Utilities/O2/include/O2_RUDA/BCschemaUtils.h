@@ -1,16 +1,19 @@
 #ifndef BCschemaUtils_H
 #define BCschemaUtils_H
 
+#define BOOST_BIND_GLOBAL_PLACEHOLDERS
+
 #include <vector>
 #include <string>
 #include <bitset>
 #include <iostream>
 #include <type_traits>
-
-#include <boost/dynamic_bitset.hpp>
+#include "DataFormatsParameters/GRPLHCIFData.h"
+//#include <boost/dynamic_bitset.hpp>
 
 namespace utilities {
   constexpr static std::size_t sNBC = 3564;
+/*
   struct SchemaBC {
     typedef uint64_t BitChunk_t;
     typedef boost::dynamic_bitset<BitChunk_t> DynBitset_t;
@@ -39,7 +42,7 @@ namespace utilities {
         mVecChunks.clear();
         boost::to_block_range(mBitsBC_Dyn, std::back_inserter(mVecChunks));
       }
-      if else(std::is_same<SchemaBC_Type,DynBitset_t >::value) {
+      else if(std::is_same<SchemaBC_Type,DynBitset_t >::value) {
         mBitsBC_Dyn = bcScheme;
         if(mBitsBC_Dyn.size()>sNBC) {
           std::cout<<"\nError! Dynamic bitset size bigger than 3564: "<<mBitsBC_Dyn.size()<<"\nCutting to 3564\n";
@@ -50,17 +53,17 @@ namespace utilities {
           mBitsBC_Dyn.resize(sNBC);
         }
         std::string stBitset{};
-        boost::to_string(mBitsBC_Dyn,stBitset)
+        boost::to_string(mBitsBC_Dyn,stBitset);
         mBitsBC = Bitset_t(stBitset);
         mVecChunks.clear();
         boost::to_block_range(mBitsBC_Dyn, std::back_inserter(mVecChunks));
       }
-      if else(std::is_same<SchemaBC_Type,std::vector<BitChunk_t> >::value) {
+      else if(std::is_same<SchemaBC_Type,std::vector<BitChunk_t> >::value) {
         mVecChunks = bcScheme;
         mBitsBC_Dyn = DynBitset_t(bcScheme);
         mBitsBC_Dyn.resize(sNBC);
         std::string stBitset{};
-        boost::to_string(bcScheme,stBitset)
+        boost::to_string(bcScheme,stBitset);
         mBitsBC = Bitset_t(stBitset);
       }
       else {
@@ -102,10 +105,66 @@ namespace utilities {
       }
     }
   };
+*/
   struct HashSchemaBC {
     
     
   };
+  struct BeamSchema {
+    BeamSchema(const o2::parameters::GRPLHCIFData &objGRPLHCIFData) {
+      initBCschema(objGRPLHCIFData);
+    }
+    using PatternBC = std::bitset<sNBC>;
+    enum EBeamMask {
+      kEmpty,
+      kBeam,
+      kBeamA, // beamA = beam 0,
+      kBeamC, // beamC = beam 1
+      kAny
+    };
+    static const inline std::map<unsigned int,std::string> mMapBeamMask{{EBeamMask::kEmpty+1,"Empty"},
+                                                           {EBeamMask::kBeam+1,"BeamBeam"},
+                                                           {EBeamMask::kBeamA+1,"BeamA"},
+                                                           {EBeamMask::kBeamC+1,"BeamC"},
+                                                           {EBeamMask::kAny+1,"AnyBeam"}};
+
+    static const inline std::map<unsigned int,std::string> mMapBeamMaskBasic{{EBeamMask::kEmpty+1,"Empty"},
+                                                           {EBeamMask::kBeam+1,"BeamBeam"},
+                                                           {EBeamMask::kBeamA+1,"BeamA"},
+                                                           {EBeamMask::kBeamC+1,"BeamC"}};
+
+
+    PatternBC mCollBC{};
+    PatternBC mCollBC_A{};
+    PatternBC mCollBC_C{};
+    std::array<int,sNBC> mPrevCollisionBCperBC{};
+    std::array<int,sNBC> mArrBeamMask{};
+    void initBCschema(const o2::parameters::GRPLHCIFData &objGRPLHCIFData) {
+      const auto &bunchFilling = objGRPLHCIFData.getBunchFilling();
+      mCollBC = bunchFilling.getBCPattern();
+      mCollBC_A = bunchFilling.getBeamPattern(0);
+      mCollBC_C = bunchFilling.getBeamPattern(1);
+      int prevBC=-1;
+      for(int iBC=0;iBC<sNBC;iBC++) {
+        mPrevCollisionBCperBC[iBC] = prevBC;
+        if(mCollBC.test(iBC) ){
+          prevBC=iBC;
+          mPrevCollisionBCperBC[iBC] = -1;
+          mArrBeamMask[iBC] = EBeamMask::kBeam;
+        }
+        else if(mCollBC_A.test(iBC)) {
+          mArrBeamMask[iBC] = EBeamMask::kBeamA;
+        }
+        else if(mCollBC_C.test(iBC)) {
+          mArrBeamMask[iBC] = EBeamMask::kBeamC;
+        }
+        else {
+          mArrBeamMask[iBC] = EBeamMask::kEmpty;
+        }
+      }
+    }
+  };
+
 } // namespace utilities
 
 #endif

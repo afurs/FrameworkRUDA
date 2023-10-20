@@ -10,6 +10,7 @@
 #include "DataFormatsFV0/Digit.h"
 #include "DataFormatsFV0/ChannelData.h"
 
+#include "DataFormatsCTP/Digits.h"
 #include "CommonDataFormat/InteractionRecord.h"
 
 #include <array>
@@ -18,7 +19,7 @@
 
 namespace detectorFIT {
 
-enum EDetectorFIT { kFDD, kFT0, kFV0};
+enum EDetectorFIT { kFDD, kFT0, kFV0, kCTP};
 enum ESide { kNothing, kSideA, kSideC};
 
 using DigitFDD = o2::fdd::Digit;
@@ -32,6 +33,9 @@ using TriggersFT0 = o2::ft0::Triggers;
 using DigitFV0 = o2::fv0::Digit;
 using ChannelDataFV0 = o2::fv0::ChannelData;
 using TriggersFV0 = o2::fv0::Triggers;
+
+using DigitCTP = o2::ctp::CTPDigit;
+
 
 
 template<int DetID,int NchannelsA, int NchannelsC,int NchannelsNone, typename DigitType, typename ChannelDataType,bool isChIDdirectForSides >
@@ -155,9 +159,17 @@ struct DetectorFIT<EDetectorFIT::kFV0>: public BaseDetectorFIT<EDetectorFIT::kFV
   }
 };
 
+template<>
+struct DetectorFIT<EDetectorFIT::kCTP>: public BaseDetectorFIT<EDetectorFIT::kCTP,0,0,0,DigitCTP,void,true> {
+  static constexpr const char* sDigitBranchName="CTPDigits";
+  static constexpr const char* sChannelDataBranchName="";
+};
+
+
 using DetectorFDD = DetectorFIT<EDetectorFIT::kFDD>;
 using DetectorFT0 = DetectorFIT<EDetectorFIT::kFT0>;
 using DetectorFV0 = DetectorFIT<EDetectorFIT::kFV0>;
+using DetectorCTP = DetectorFIT<EDetectorFIT::kCTP>;
 
 
 }// namespace detectorFIT

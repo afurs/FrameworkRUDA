@@ -20,11 +20,15 @@ class InputFileManager {
     std::string mFilepathInputFDD{};
     std::string mFilepathInputFT0{};
     std::string mFilepathInputFV0{};
+    std::string mFilepathInputCTP{};
+
     void print() const {
       std::cout<<std::endl;
       std::cout<<"\n FDD input: "<<mFilepathInputFDD;
       std::cout<<"\n FT0 input: "<<mFilepathInputFT0;
       std::cout<<"\n FV0 input: "<<mFilepathInputFV0;
+      std::cout<<"\n CTP input: "<<mFilepathInputCTP;
+
       std::cout<<std::endl;
     }
   };
@@ -32,10 +36,11 @@ class InputFileManager {
   struct SyncEntryFilenamesFIT {
     unsigned int mRunnum{};
     int mChunkIndex{-1};// starts from 0, if -1 then no chunk index
-    std::array<std::string,3> mEntryFilepathsFIT{}; // 0 - FDD, 1 - FT0, 2 - FV0
+    std::array<std::string,4> mEntryFilepathsFIT{}; // 0 - FDD, 1 - FT0, 2 - FV0, 3 - CTP
     std::string getFDD() const { return mEntryFilepathsFIT[0];}
     std::string getFT0() const { return mEntryFilepathsFIT[1];}
     std::string getFV0() const { return mEntryFilepathsFIT[2];}
+    std::string getCTP() const { return mEntryFilepathsFIT[3];}
   };
 
   struct Parameters {
@@ -56,7 +61,7 @@ class InputFileManager {
 
   // Get detector index from filepath, in format "_d[1-3]_" if there are no such format, index will belong to FT0 by default
   std::function<int(const std::string&)> mGetDetIndex = [] (const std::string& filepath) {
-    auto regRunNum = std::regex{"_d[1-3]{1}_"};
+    auto regRunNum = std::regex{"_d[1-4]{1}_"};
     std::smatch sm;
     bool searchResult = std::regex_search(filepath,sm,regRunNum);
     if(searchResult) {

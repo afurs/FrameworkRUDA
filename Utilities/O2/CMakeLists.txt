@@ -9,9 +9,11 @@ set(HDRS
     include/${MODULE}/DetectorFIT.h
     include/${MODULE}/EventChDataParams.h
     include/${MODULE}/FunctorField.h
+
+    include/${MODULE}/MCP.h
     include/${MODULE}/SyncDigits.h
-    include/${MODULE}/Triggers.h
     include/${MODULE}/TimestampInfo.h
+    include/${MODULE}/Triggers.h
     )
 add_library(${MODULE} INTERFACE)
 target_include_directories(${MODULE} INTERFACE 

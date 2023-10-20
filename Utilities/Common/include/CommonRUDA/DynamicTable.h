@@ -29,6 +29,7 @@ namespace common
         mTextTable.push_back(entryAsString(mTable.back(),mDelimeter));
       }
     }
+    std::string getTextEntry() const {return mTextTable.back();}
     void fillTable(bool fillTextTable=true) {
       fillTable(mCurrentTupleArgs,fillTextTable);
     }
