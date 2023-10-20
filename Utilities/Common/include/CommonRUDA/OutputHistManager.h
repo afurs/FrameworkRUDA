@@ -159,6 +159,29 @@ class OutputHistManager : public OutputManager  {
     }
     return vecResult;
   }
+  template<typename HistType, typename MapType, typename... Args>
+  auto makeVecHists( const MapType &mapLabels,const std::string &namePrefix,const std::string &titlePrefix,Args&&... argsHist)->std::vector<HistType*> {
+    std::vector<HistType*> vecResult{};
+    for(const auto &entry : mapLabels) {
+      const std::string &name = namePrefix + entry.second;
+      const std::string &title = titlePrefix + entry.second;
+      vecResult.push_back(registerHist<HistType>(name,title,std::forward<Args>(argsHist)...));
+    }
+    return vecResult;
+  };
+
+  template<typename HistType, typename MapType, typename... Args>
+  auto makeMapHists(const MapType &mapLabels,const std::string &namePrefix,const std::string &titlePrefix,Args&&... argsHist)->std::map<typename MapType::key_type,HistType*,typename MapType::key_compare> {
+    std::map<typename MapType::key_type,HistType*,typename MapType::key_compare> mapResult{};
+    for(const auto &entry : mapLabels) {
+      const std::string &name = namePrefix + entry.second;
+      const std::string &title = titlePrefix + entry.second;
+      mapResult.insert({entry.first,registerHist<HistType>(name,title,std::forward<Args>(argsHist)...)});
+    }
+    return mapResult;
+  };
+
+
 /*
   template<typename HistType, typename... Args>
   static std::vector<std::decay_t<HistType> *> makeHist(const std::vector<int> &vecNums, const std::string &name, const std::string &title,  Args&&... argsHist) {

@@ -12,7 +12,7 @@ install.sh /path/to/src /path/to/installation /path/to/local/logbook /path/to/gr
 
 Example:
 ```
-source install.sh . ~/work/RUDA ~/work/logbook_alice
+source install.sh . ~/.local/share/RUDA
 ```
 
 Add following lines into .bashrc
