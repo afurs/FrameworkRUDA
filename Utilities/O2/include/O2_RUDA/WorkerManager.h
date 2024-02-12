@@ -3,9 +3,9 @@
 #include "CommonRUDA/AnalysisUtils.h"
 #include "CommonRUDA/InputFileManager.h"
 
-#include "O2_RUDA/CCDB.h"
-#include "O2_RUDA/DetectorFIT.h"
-#include "O2_RUDA/EventChDataParams.h"
+#include "CCDB.h"
+#include "DetectorFIT.h"
+#include "EventChDataParams.h"
 
 #include <vector>
 #include <utility>
