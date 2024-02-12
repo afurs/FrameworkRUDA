@@ -14,6 +14,7 @@ set(HDRS
     include/${MODULE}/SyncDigits.h
     include/${MODULE}/TimestampInfo.h
     include/${MODULE}/Triggers.h
+    include/${MODULE}/WorkerManager.h
     )
 add_library(${MODULE} INTERFACE)
 target_include_directories(${MODULE} INTERFACE 
