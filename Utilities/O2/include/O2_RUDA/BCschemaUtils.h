@@ -12,7 +12,7 @@
 //#include <boost/dynamic_bitset.hpp>
 
 namespace utilities {
-  constexpr static std::size_t sNBC = 3564;
+  constexpr std::size_t sNBC = 3564;
 /*
   struct SchemaBC {
     typedef uint64_t BitChunk_t;
@@ -106,32 +106,34 @@ namespace utilities {
     }
   };
 */
-  struct HashSchemaBC {
-    
-    
+  enum EBeamMask {
+    kEmpty,
+    kBeam,
+    kBeamA, // beamA = beam 0,
+    kBeamC, // beamC = beam 1
+    kAny
   };
+
+
   struct BeamSchema {
     BeamSchema(const o2::parameters::GRPLHCIFData &objGRPLHCIFData) {
       initBCschema(objGRPLHCIFData);
     }
     using PatternBC = std::bitset<sNBC>;
-    enum EBeamMask {
-      kEmpty,
-      kBeam,
-      kBeamA, // beamA = beam 0,
-      kBeamC, // beamC = beam 1
-      kAny
-    };
-    static const inline std::map<unsigned int,std::string> mMapBeamMask{{EBeamMask::kEmpty+1,"Empty"},
-                                                           {EBeamMask::kBeam+1,"BeamBeam"},
-                                                           {EBeamMask::kBeamA+1,"BeamA"},
-                                                           {EBeamMask::kBeamC+1,"BeamC"},
-                                                           {EBeamMask::kAny+1,"AnyBeam"}};
+    static const inline std::map<unsigned int,std::string> sMapBeamMask{
+                                                           {EBeamMask::kEmpty,"Empty"},
+                                                           {EBeamMask::kBeam,"BeamBeam"},
+                                                           {EBeamMask::kBeamA,"BeamA"},
+                                                           {EBeamMask::kBeamC,"BeamC"},
+                                                           {EBeamMask::kAny,"AnyBeam"}
+                                                           };
 
-    static const inline std::map<unsigned int,std::string> mMapBeamMaskBasic{{EBeamMask::kEmpty+1,"Empty"},
-                                                           {EBeamMask::kBeam+1,"BeamBeam"},
-                                                           {EBeamMask::kBeamA+1,"BeamA"},
-                                                           {EBeamMask::kBeamC+1,"BeamC"}};
+    static const inline std::map<unsigned int,std::string> sMapBeamMaskBasic{
+                                                           {EBeamMask::kEmpty,"Empty"},
+                                                           {EBeamMask::kBeam,"BeamBeam"},
+                                                           {EBeamMask::kBeamA,"BeamA"},
+                                                           {EBeamMask::kBeamC,"BeamC"}
+                                                           };
 
 
     PatternBC mCollBC{};

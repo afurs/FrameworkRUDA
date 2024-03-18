@@ -13,6 +13,8 @@
 #include "DataFormatsCTP/Digits.h"
 #include "CommonDataFormat/InteractionRecord.h"
 
+#include "Triggers.h"
+
 #include <array>
 #include <utility>
 #include <type_traits>
@@ -84,6 +86,33 @@ class BaseDetectorFIT {
     }
   }
   constexpr static std::array<int,sNchannelsAll> sArrChID2Side = setChIDs2Side();
+  static std::vector<int> getChannels(int side) {
+    int idxBegin = 0;
+    int nChannels = 0;
+    if(isSideA(side)) {
+      idxBegin = 0;
+      nChannels = sNchannelsA;
+    }
+    else if(isSideC(side)) {
+      idxBegin = sNchannelsA;
+      nChannels = sNchannelsC;
+    }
+    else {
+      idxBegin = sNchannelsAC;
+      nChannels = sNchannelsAll - sNchannelsAC;
+    }
+    std::vector<int> vecChannels(nChannels);
+    std::iota(vecChannels.begin(), vecChannels.end(), idxBegin);
+    return vecChannels;
+  }
+  static std::vector<int> getChannelsA() {return getChannels(ESide::kSideA);}
+  static std::vector<int> getChannelsC() {return getChannels(ESide::kSideC);}
+  static std::vector<int> getChannelsAC() {
+    std::vector<int> vecChannelsAC = getChannelsA();
+    std::vector<int> vecChannelsC = getChannelsC();
+    vecChannelsAC.insert(vecChannelsAC.end(), vecChannelsC.begin(), vecChannelsC.end());
+    return vecChannelsAC;
+  }
 };
 
 template<int DetID>
@@ -94,7 +123,8 @@ template<>
 struct DetectorFIT<EDetectorFIT::kFDD>: public BaseDetectorFIT<EDetectorFIT::kFDD,8,8,3,DigitFDD,ChannelDataFDD,false> {
   static constexpr const char* sDigitBranchName="FDDDigit";
   static constexpr const char* sChannelDataBranchName="FDDDigitCh";
-
+  static const inline std::map<unsigned int, std::string> sMapTrgNames = triggers::Trigger::sMapTrgBitNamesFDD;
+  static const inline std::map<unsigned int, std::string> sMapPMbits = triggers::PMbits::sMapPMbits;
   template<typename ChannelDataType>
   static auto amp(ChannelDataType &&channelData)-> const std::decay_t<decltype(channelData.mChargeADC)> & {
     return channelData.mChargeADC;
@@ -118,6 +148,8 @@ template<>
 struct DetectorFIT<EDetectorFIT::kFT0>: public BaseDetectorFIT<EDetectorFIT::kFT0,96,112,4,DigitFT0,ChannelDataFT0,true> {
   static constexpr const char* sDigitBranchName="FT0DIGITSBC";
   static constexpr const char* sChannelDataBranchName="FT0DIGITSCH";
+  static const inline std::map<unsigned int, std::string> sMapTrgNames = triggers::Trigger::sMapTrgBitNamesFT0;
+  static const inline std::map<unsigned int, std::string> sMapPMbits = triggers::PMbits::sMapPMbits;
   template<typename ChannelDataType>
   static auto amp(ChannelDataType &&channelData)-> const std::decay_t<decltype(channelData.QTCAmpl)> & {
     return channelData.QTCAmpl;
@@ -140,7 +172,8 @@ template<>
 struct DetectorFIT<EDetectorFIT::kFV0>: public BaseDetectorFIT<EDetectorFIT::kFV0,48,0,1,DigitFV0,ChannelDataFV0,true> {
   static constexpr const char* sDigitBranchName="FV0DigitBC";
   static constexpr const char* sChannelDataBranchName="FV0DigitCh";
-
+  static const inline std::map<unsigned int, std::string> sMapTrgNames = triggers::Trigger::sMapTrgBitNamesFV0;
+  static const inline std::map<unsigned int, std::string> sMapPMbits = triggers::PMbits::sMapPMbits;
   template<typename ChannelDataType>
   static auto amp(ChannelDataType &&channelData)-> const std::decay_t<decltype(channelData.QTCAmpl)> & {
     return channelData.QTCAmpl;

@@ -129,21 +129,26 @@ namespace digits
 
 template<typename DetectorType>
 struct ManagerDigits {
+ public:
   typedef DetectorType Detector_t;
-  ManagerDigits(const std::string &filepath, const std::string &treeName = "o2sim"):mFilepath(filepath),mTreeName(treeName) {
-    init();
-  }
   using Digit = typename Detector_t::Digit_t;
   using ChannelData = typename Detector_t::ChannelData_t;
+
+  ManagerDigits(const std::string &filepath, const std::string &treeName = "o2sim"):mFilepath(filepath),mTreeName(treeName) {
+    init();
+    setVars();
+  }
+  ManagerDigits(const ManagerDigits&) = delete;
+  ManagerDigits& operator=(const ManagerDigits&) = delete;
 
   std::unique_ptr<TFile> mFileInput{nullptr};
   std::unique_ptr<TTree> mTreeInput{nullptr};
   std::string mFilepath{""};
   std::string mTreeName{"o2sim"};
-
-  std::vector<Digit> *mPtrVecDigits = nullptr;
-  std::vector<ChannelData> *mPtrVecChannelData = nullptr;
-
+  std::vector<Digit> mVecDigits{};
+  std::vector<ChannelData> mVecChannelData{};
+  long long mNentries{0};
+  long long mCounter{0};
   void init() {
     auto prepareTree = [] (const std::string &filepath,const std::string &treeName,std::unique_ptr<TFile> &inputFile, std::unique_ptr<TTree> &inputTree) {
       inputFile = std::unique_ptr<TFile>(TFile::Open(filepath.c_str()));
@@ -161,6 +166,18 @@ struct ManagerDigits {
     };
     if(mFilepath.size()>0) {
       prepareTree(mFilepath,mTreeName,mFileInput,mTreeInput);
+      if(mTreeInput != nullptr) {
+        mNentries = mTreeInput->GetEntries();
+      }
+      else {
+        std::cout<<"\nCannot open TTree: " << mTreeName;
+      }
+      if(mNentries>0) {
+        mIsReady = true;
+      }
+      else {
+        std::cout<<"\nEmpty TTree: " << mTreeName;
+      }
     }
   }
   void setVars(std::vector<Digit> &vecDigits, std::vector<ChannelData> &vecChannelData) {
@@ -171,20 +188,25 @@ struct ManagerDigits {
       mTreeInput->SetBranchAddress(Detector_t::sChannelDataBranchName, &mPtrVecChannelData);
     }
   }
+
+  void setVars() {
+    setVars(mVecDigits, mVecChannelData);
+  }
+
+  bool nextEntry() {
+    return mTreeInput->GetEntry(mCounter++)>0;
+  }
   void getEntry(long long entryID) {
     if(mTreeInput != nullptr) {
       mTreeInput->GetEntry(entryID);
     }
   }
-  long long  getEntries() const{
-    if(mTreeInput != nullptr) {
-      return mTreeInput->GetEntries();
-    }
-    else {
-      return 0;
-    }
-  }
-
+  long long getEntries() const { return mNentries;}
+  bool isReady() const {return mIsReady;}
+ private:
+  bool mIsReady {false};
+  std::vector<Digit> *mPtrVecDigits = nullptr;
+  std::vector<ChannelData> *mPtrVecChannelData = nullptr;
 };
 
 template<typename... ManagerDigitsType>

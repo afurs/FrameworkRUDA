@@ -24,7 +24,7 @@ void runWorkers(const Functor &functor,
                 std::size_t nParallelJobs,
                 std::size_t nChunksPerRun,
                 const std::set<unsigned int> &setRunnum,
-                const ExtraParams &extraParams
+                const ExtraParams &extraParams = std::nullptr_t{}
                 ) {
   gSystem->Load("libboost_filesystem.so");
   gSystem->Load("$RUDA_ROOT/lib/libCommonRUDA.so");

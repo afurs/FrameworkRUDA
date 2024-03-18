@@ -106,8 +106,10 @@ namespace hists
       if(mTitle.size()>0) {
         axis->SetTitle(mTitle.c_str());
       }
-      for(const auto &binName: mBinLabels) {
-        axis->SetBinLabel(binName.first,binName.second.c_str());
+      for(const auto &binEntry: mBinLabels) {
+        const auto &binIdx = binEntry.first;
+        const auto &binName = binEntry.second;
+        axis->SetBinLabel(binIdx + 1,binName.c_str());
       }
     }
   };
